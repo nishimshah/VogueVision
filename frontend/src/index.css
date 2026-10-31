@@ -2,13 +2,14 @@
 
 @layer base {
   :root {
-    --bg-main: #D8D0DC;
-    --bg-secondary: #E5DEE8;
-    --glass-panel: rgba(255, 255, 255, 0.32);
-    --glass-border: rgba(255, 255, 255, 0.60);
-    --text-primary: #292331;
-    --text-secondary: #6D6574;
-    --accent: #9271BF;
+    --bg-main: #191723;
+    --bg-secondary: #211E2B;
+    --glass-panel: rgba(255, 255, 255, 0.055);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --text-primary: #F5F1F8;
+    --text-secondary: #AAA5B5;
+    --accent: #B49AF4;
+    --selected-state: rgba(180, 154, 244, 0.20);
   }
 
   body {
@@ -22,58 +23,74 @@
   }
 }
 
-/* Smoky Mauve Glassmorphism Theme Classes */
-.mauve-glass-panel {
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.60);
-  box-shadow: 0 10px 30px rgba(41, 35, 49, 0.06);
+/* Midnight Amethyst Liquid Glass Theme Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 16px 48px rgba(0, 0, 0, 0.28);
 }
 
-.mauve-glass-surface {
-  background: rgba(255, 255, 255, 0.25);
+.glass-surface {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.50);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.20);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.mauve-glass-card {
-  background: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 4px 16px rgba(41, 35, 49, 0.04);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mauve-glass-card:hover {
+.glass-card:hover {
   transform: translateY(-1.5px);
-  background: rgba(255, 255, 255, 0.68);
-  border-color: rgba(146, 113, 191, 0.55);
-  box-shadow: 0 8px 22px rgba(146, 113, 191, 0.12);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(180, 154, 244, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 12px 28px rgba(0, 0, 0, 0.32);
 }
 
-.mauve-btn-primary {
-  background: #9271BF;
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(146, 113, 191, 0.28);
+.glass-btn-primary {
+  background: #B49AF4;
+  color: #191723;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(180, 154, 244, 0.30);
   transition: all 0.2s ease;
 }
 
-.mauve-btn-primary:hover {
-  background: #815EAE;
+.glass-btn-primary:hover {
+  background: #C4ADFA;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(146, 113, 191, 0.38);
+  box-shadow: 0 6px 20px rgba(180, 154, 244, 0.42);
 }
 
 /* Mannequin Chamber Glass Container */
 .mannequin-chamber {
-  background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 14px 40px rgba(41, 35, 49, 0.08), inset 0 0 20px rgba(255, 255, 255, 0.4);
+  background: rgba(25, 23, 35, 0.70);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 20px 50px rgba(0, 0, 0, 0.45),
+    inset 0 0 30px rgba(180, 154, 244, 0.03);
+}
+
+/* Glass Toolbar */
+.glass-toolbar {
+  background: rgba(255, 255, 255, 0.065);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 /* Custom scrollbars for internal scroll areas */
@@ -82,13 +99,13 @@
   height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(109, 101, 116, 0.08);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(146, 113, 191, 0.35);
+  background: rgba(180, 154, 244, 0.28);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(146, 113, 191, 0.65);
+  background: rgba(180, 154, 244, 0.55);
 }

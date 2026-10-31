@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Shirt, Sparkles, Layers, Scissors, Heart, ChevronRight, 
-  ExternalLink, Info
+  ExternalLink, Info, Check
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import OutfitPreview, { PREDEFINED_OUTFITS } from '../components/OutfitPreview';
@@ -16,7 +16,7 @@ export default function StudioPage() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [savedModalOpen, setSavedModalOpen] = useState(false);
 
-  // Category & Filter State (Prioritizing Tops, Bottoms, Skirts, Dresses)
+  // Category & Filter State (Tops, Bottoms, Skirts, Dresses)
   const [activeCategory, setActiveCategory] = useState('tops');
   const [activeOccasion, setActiveOccasion] = useState('All'); // 'All' | 'Casual' | 'Formal' | 'Party'
   const [catalogProducts, setCatalogProducts] = useState([]);
@@ -31,13 +31,14 @@ export default function StudioPage() {
     bag: null
   });
 
-  // CV Data
+  // Computer Vision Data
   const [similarStyles, setSimilarStyles] = useState([]);
   const [complementaryPieces, setComplementaryPieces] = useState({
     bottoms: [],
     shoes: [],
     bags: [],
-    accessories: []
+    accessories: [],
+    tops: []
   });
   const [activeLookIndex, setActiveLookIndex] = useState(0);
   const [lastSelectedCategory, setLastSelectedCategory] = useState('tops'); // 'tops' | 'bottoms' | 'dresses'
@@ -62,7 +63,7 @@ export default function StudioPage() {
     }
   });
 
-  // 4 Core Garment Categories (Shoes & Bags are kept fixed in preset looks)
+  // 4 Core Garment Categories
   const categories = [
     { id: 'tops', label: 'Tops & Blouses', icon: <Shirt className="w-3.5 h-3.5" /> },
     { id: 'jeans_trousers', label: 'Jeans & Trousers', icon: <Layers className="w-3.5 h-3.5" /> },
@@ -77,7 +78,7 @@ export default function StudioPage() {
     setTimeout(() => setToastMessage(null), 2500);
   };
 
-  // 1. Initial Load: Fetch catalog and load default Look 1
+  // 1. Initial Load: Fetch catalog and initialize default Look 1
   useEffect(() => {
     async function initCatalog() {
       try {
@@ -86,11 +87,7 @@ export default function StudioPage() {
         const prods = data.products || [];
         setCatalogProducts(prods);
 
-        // Pre-equip Look 1:
-        // Top: ID 1 (White Fitted T-Shirt)
-        // Bottom: ID 6 (Blue Straight-Leg Jeans)
-        // Shoes: ID 12 (White Tennis Sneakers)
-        // Bag: ID 16 (Tan Leather Tote)
+        // Pre-equip Look 1 (Casual: White Tee + Blue Jeans)
         const defaultTop = prods.find(p => p.id === 1) || prods[0];
         const defaultBottom = prods.find(p => p.id === 6);
         const defaultShoes = prods.find(p => p.id === 12);
@@ -122,7 +119,7 @@ export default function StudioPage() {
       const data = await getProductStyling(productId);
       if (data.success) {
         setSimilarStyles(data.similar_styles || []);
-        setComplementaryPieces(data.complementary_pieces || { bottoms: [], shoes: [], bags: [], accessories: [] });
+        setComplementaryPieces(data.complementary_pieces || { bottoms: [], shoes: [], bags: [], accessories: [], tops: [] });
       }
     } catch (err) {
       console.error("Error loading CV styling:", err);
@@ -165,7 +162,7 @@ export default function StudioPage() {
     }
   };
 
-  // Apply a verified Curated Preset (1..7)
+  // Apply a verified Curated Preset Look (1..7)
   const applyPreset = (presetId) => {
     const preset = PREDEFINED_OUTFITS.find(p => p.id === presetId);
     if (!preset) return;
@@ -202,10 +199,27 @@ export default function StudioPage() {
     applyPreset(PREDEFINED_OUTFITS[nextIdx].id);
   };
 
-  // Reset entire outfit to default separates (Part 3)
+  // Reset entire outfit to default Look 1
   const handleResetOutfit = () => {
     applyPreset(1);
     showToast(`Outfit reset to default ensemble.`);
+  };
+
+  // Handle Occasion Switching (Casual, Formal, Party, All)
+  const handleOccasionChange = (occ) => {
+    setActiveOccasion(occ);
+    if (occ === 'Casual') {
+      // Check if current outfit matches casual, else switch to Look 1
+      const isCasual = selectedOutfit.top?.occasions?.includes('Casual') || selectedOutfit.dress?.occasions?.includes('Casual');
+      if (!isCasual) applyPreset(1);
+    } else if (occ === 'Formal') {
+      // Check if current outfit matches formal, else switch to Look 3
+      const isFormal = selectedOutfit.top?.occasions?.includes('Formal') || selectedOutfit.dress?.occasions?.includes('Formal');
+      if (!isFormal) applyPreset(3);
+    } else if (occ === 'Party') {
+      // Switch to Look 6 (Black Cocktail Dress) or Party corset
+      applyPreset(6);
+    }
   };
 
   // Filter left catalog products based on active category & occasion
@@ -219,17 +233,7 @@ export default function StudioPage() {
     if (!catMatch) return false;
     if (activeOccasion === 'All') return true;
 
-    // Filter by occasion keywords if applicable
-    if (activeOccasion === 'Casual') {
-      return p.name.includes('T-Shirt') || p.name.includes('Jeans') || p.name.includes('Tank') || p.name.includes('Sleeveless') || p.name.includes('Shirt');
-    }
-    if (activeOccasion === 'Formal') {
-      return p.name.includes('Trousers') || p.name.includes('Blouse') || p.name.includes('Shirt') || p.name.includes('Black Fitted');
-    }
-    if (activeOccasion === 'Party') {
-      return p.name.includes('Dress') || p.name.includes('Skirt') || p.name.includes('Silky');
-    }
-    return true;
+    return p.occasions && p.occasions.includes(activeOccasion);
   });
 
   // Toggle Item in Wishlist
@@ -247,7 +251,7 @@ export default function StudioPage() {
     localStorage.setItem('voguevision_wishlist', JSON.stringify(updated));
   };
 
-  // Save Current Outfit to LocalStorage (Part 3)
+  // Save Current Outfit to LocalStorage
   const handleSaveOutfit = () => {
     const activeMain = selectedOutfit.dress || selectedOutfit.top;
     const newOutfit = {
@@ -258,6 +262,7 @@ export default function StudioPage() {
       dress: selectedOutfit.dress,
       shoes: selectedOutfit.shoes,
       bag: selectedOutfit.bag,
+      occasion: activeOccasion,
       savedAt: new Date().toISOString()
     };
     const updated = [newOutfit, ...savedOutfits];
@@ -322,15 +327,18 @@ export default function StudioPage() {
     );
   };
 
-  // Determine complementary pieces for "Style It With" based on active item
+  // Determine complementary pieces for "Style It With"
+  // Top selected -> recommend bottoms; Bottom selected -> recommend tops; Dress selected -> recommend alternative dresses
   const getStyleItWithItems = () => {
     if (selectedOutfit.dress) {
-      // For dresses, offer other compatible pieces or alternate dresses
+      // For dresses, offer other compatible dresses
       return catalogProducts.filter(p => p.category === 'dresses' && p.id !== selectedOutfit.dress.id);
     }
     if (lastSelectedCategory === 'bottoms') {
       // Bottom is selected: show compatible tops
-      return catalogProducts.filter(p => p.category === 'tops');
+      return complementaryPieces.tops?.length > 0
+        ? complementaryPieces.tops
+        : catalogProducts.filter(p => p.category === 'tops');
     }
     // Top is selected: show compatible bottoms
     return complementaryPieces.bottoms?.length > 0 
@@ -339,7 +347,7 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col font-sans select-none overflow-hidden bg-[#D8D0DC] text-[#292331]">
+    <div className="h-[100dvh] w-full flex flex-col font-sans select-none overflow-hidden bg-[#191723] text-[#F5F1F8]">
       {/* Compact Transparent Glass Header */}
       <Navbar 
         onOpenHowItWorks={() => setHowItWorksOpen(true)}
@@ -350,8 +358,8 @@ export default function StudioPage() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-white/95 border border-[#9271BF]/40 text-[#292331] text-xs font-semibold shadow-lg flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-          <Sparkles className="w-3.5 h-3.5 text-[#9271BF]" />
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-[#211E2B]/95 border border-[#B49AF4]/40 text-[#F5F1F8] text-xs font-semibold shadow-[0_8px_30px_rgba(0,0,0,0.6)] flex items-center gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Sparkles className="w-3.5 h-3.5 text-[#B49AF4]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -363,35 +371,35 @@ export default function StudioPage() {
         {/* LEFT COLUMN: 01 — Choose Your Style (Span 3.5) */}
         {/* ========================================================= */}
         <section className="lg:col-span-3 h-full min-h-0 flex flex-col">
-          <div className="mauve-glass-panel rounded-2xl p-3.5 h-full flex flex-col min-h-0 shadow-[0_8px_24px_rgba(41,35,49,0.05)]">
+          <div className="glass-panel rounded-2xl p-3 h-full flex flex-col min-h-0 shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
             
             {/* Section Header */}
-            <div className="flex items-center gap-2 mb-2.5 flex-shrink-0">
-              <div className="w-5 h-5 rounded-full bg-[#9271BF] text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0 shadow-2xs">
+            <div className="flex items-center gap-2 mb-2 flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-[#B49AF4] text-[#191723] font-bold text-[10px] flex items-center justify-center flex-shrink-0 shadow-xs">
                 1
               </div>
               <div>
-                <h2 className="text-sm font-serif font-bold text-[#292331] leading-tight">
+                <h2 className="text-sm font-serif font-bold text-[#F5F1F8] leading-tight">
                   Choose Your Style
                 </h2>
-                <p className="text-[10px] text-[#6D6574]">
-                  Minimal Curated Wardrobe
+                <p className="text-[10px] text-[#AAA5B5]">
+                  Curated Solid Wardrobe
                 </p>
               </div>
             </div>
 
-            {/* Occasion Filter Tabs (Part 7) */}
-            <div className="flex items-center gap-1 mb-2 bg-white/45 p-0.5 rounded-full border border-white/60 flex-shrink-0">
+            {/* Occasion Filter Tabs */}
+            <div className="flex items-center gap-1 mb-2 bg-white/[0.04] p-0.5 rounded-full border border-white/[0.10] flex-shrink-0">
               {occasions.map((occ) => {
                 const isActive = activeOccasion === occ;
                 return (
                   <button
                     key={occ}
-                    onClick={() => setActiveOccasion(occ)}
+                    onClick={() => handleOccasionChange(occ)}
                     className={`flex-1 py-1 rounded-full text-[10px] font-semibold transition-all cursor-pointer text-center ${
                       isActive 
-                        ? 'bg-white text-[#9271BF] shadow-2xs font-bold' 
-                        : 'text-[#6D6574] hover:text-[#292331]'
+                        ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/50 text-[#F5F1F8] shadow-xs font-bold' 
+                        : 'text-[#AAA5B5] hover:text-[#F5F1F8]'
                     }`}
                   >
                     {occ}
@@ -401,7 +409,7 @@ export default function StudioPage() {
             </div>
 
             {/* Category Pills (Tops, Trousers, Skirts, Dresses) */}
-            <div className="grid grid-cols-2 gap-1 mb-2.5 flex-shrink-0">
+            <div className="grid grid-cols-2 gap-1 mb-2 flex-shrink-0">
               {categories.map((cat) => {
                 const isActive = activeCategory === cat.id;
                 return (
@@ -410,11 +418,11 @@ export default function StudioPage() {
                     onClick={() => setActiveCategory(cat.id)}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10.5px] font-semibold transition-all cursor-pointer ${
                       isActive 
-                        ? 'bg-[#9271BF] text-white shadow-2xs' 
-                        : 'bg-white/40 text-[#6D6574] hover:bg-white/60 hover:text-[#292331] border border-white/60'
+                        ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/60 text-[#F5F1F8] shadow-xs' 
+                        : 'bg-white/[0.04] text-[#AAA5B5] hover:bg-white/[0.08] hover:text-[#F5F1F8] border border-white/[0.08]'
                     }`}
                   >
-                    <span className={isActive ? 'text-white' : 'text-[#9271BF]'}>
+                    <span className={isActive ? 'text-[#B49AF4]' : 'text-[#AAA5B5]'}>
                       {cat.icon}
                     </span>
                     <span className="truncate">{cat.label}</span>
@@ -428,7 +436,7 @@ export default function StudioPage() {
               <div className="grid grid-cols-2 gap-2">
                 {catalogLoading ? (
                   Array.from({ length: 4 }).map((_, idx) => (
-                    <div key={idx} className="aspect-square rounded-xl bg-white/30 animate-pulse border border-white/40" />
+                    <div key={idx} className="aspect-square rounded-xl bg-white/[0.04] animate-pulse border border-white/[0.08]" />
                   ))
                 ) : (
                   filteredCatalog.map((product) => {
@@ -441,12 +449,12 @@ export default function StudioPage() {
                         onClick={() => selectGarment(product)}
                         className={`group relative aspect-[4/4.5] rounded-xl overflow-hidden cursor-pointer p-1.5 transition-all duration-200 flex flex-col justify-between ${
                           isSelected 
-                            ? 'bg-white/80 border-2 border-[#9271BF] shadow-[0_0_12px_rgba(146,113,191,0.3)] scale-[1.01]' 
-                            : 'bg-white/45 hover:bg-white/70 border border-white/60 hover:shadow-xs'
+                            ? 'bg-[#B49AF4]/15 border-2 border-[#B49AF4] shadow-[0_0_16px_rgba(180,154,244,0.3)] scale-[1.01]' 
+                            : 'bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.12] hover:shadow-xs'
                         }`}
                         title={`${product.name} — ${product.price}`}
                       >
-                        <div className="relative flex-1 rounded-lg overflow-hidden mb-1">
+                        <div className="relative flex-1 rounded-lg overflow-hidden mb-1 bg-white/[0.02]">
                           <img 
                             src={`/catalog/${product.image}`}
                             alt={product.name}
@@ -459,8 +467,8 @@ export default function StudioPage() {
                             onClick={(e) => toggleWishlist(product, e)}
                             className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                               isFav 
-                                ? 'bg-[#9271BF] text-white' 
-                                : 'bg-white/75 text-[#292331]/60 hover:text-[#9271BF] opacity-0 group-hover:opacity-100'
+                                ? 'bg-[#B49AF4] text-[#191723]' 
+                                : 'bg-[#191723]/70 text-[#AAA5B5] hover:text-[#B49AF4] opacity-0 group-hover:opacity-100'
                             }`}
                           >
                             <Heart className="w-2.5 h-2.5 fill-current" />
@@ -468,10 +476,10 @@ export default function StudioPage() {
                         </div>
 
                         <div>
-                          <h4 className="text-[10px] font-semibold text-[#292331] leading-tight line-clamp-1">
+                          <h4 className="text-[10px] font-semibold text-[#F5F1F8] leading-tight line-clamp-1">
                             {product.name}
                           </h4>
-                          <span className="text-[9.5px] font-medium text-[#6D6574]">
+                          <span className="text-[9.5px] font-medium text-[#B49AF4] font-mono">
                             {product.price}
                           </span>
                         </div>
@@ -503,89 +511,98 @@ export default function StudioPage() {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: 02 Similar Pieces, 03 Style It With, 04 Online (Span 4) */}
         {/* ========================================================= */}
-        <section className="lg:col-span-4 h-full min-h-0 flex flex-col gap-2.5 justify-between">
+        <section className="lg:col-span-4 h-full min-h-0 flex flex-col gap-2 justify-between">
           
-          {/* SECTION 02: Similar Pieces (cv2.compareHist Real Scores) */}
-          <div className="mauve-glass-panel rounded-2xl p-3 flex-1 min-h-0 flex flex-col justify-between shadow-[0_8px_24px_rgba(41,35,49,0.05)]">
-            <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
-              <div className="w-5 h-5 rounded-full bg-[#9271BF] text-white font-bold text-[10px] flex items-center justify-center shadow-2xs">
+          {/* SECTION 02: Similar Pieces (cv2.compareHist Real Pearson Scores) */}
+          <div className="glass-panel rounded-2xl p-2.5 flex-1 min-h-0 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-[#B49AF4] text-[#191723] font-bold text-[10px] flex items-center justify-center shadow-xs">
                 2
               </div>
               <div>
-                <h3 className="text-xs font-serif font-bold text-[#292331] leading-tight">
+                <h3 className="text-xs font-serif font-bold text-[#F5F1F8] leading-tight">
                   Similar Pieces
                 </h3>
-                <p className="text-[9.5px] text-[#6D6574]">
-                  Computer Vision Visual Similarity
+                <p className="text-[9.5px] text-[#AAA5B5]">
+                  OpenCV 512-Bin HSV Histogram Correlation
                 </p>
               </div>
             </div>
 
             {/* Horizontal Product Cards Row */}
             <div className="grid grid-cols-4 gap-1.5 flex-1 min-h-0 items-center">
-              {similarStyles.slice(0, 4).map((sim) => {
-                const isFav = wishlist.some(w => w.id === sim.id);
-                const isSelected = isProductSelected(sim);
-                const matchVal = Math.round(sim.similarity_score || (sim.match_percentage ? sim.match_percentage : 85));
+              {similarStyles.length === 0 ? (
+                <div className="col-span-4 py-4 text-center text-[10.5px] text-[#AAA5B5]">
+                  Calculating OpenCV color distribution matches...
+                </div>
+              ) : (
+                similarStyles.slice(0, 4).map((sim) => {
+                  const isFav = wishlist.some(w => w.id === sim.id);
+                  const isSelected = isProductSelected(sim);
+                  const corrVal = sim.raw_correlation !== undefined ? sim.raw_correlation : 0.75;
+                  const pctVal = sim.similarity_score !== undefined ? sim.similarity_score : Math.round(corrVal * 100);
 
-                return (
-                  <div
-                    key={sim.id}
-                    onClick={() => selectGarment(sim)}
-                    className={`group relative rounded-xl p-1 border transition-all cursor-pointer flex flex-col justify-between h-full max-h-[140px] ${
-                      isSelected
-                        ? 'bg-white/85 border-2 border-[#9271BF] shadow-xs'
-                        : 'bg-white/45 hover:bg-white/70 border-white/60'
-                    }`}
-                  >
-                    <div className="relative aspect-square rounded-lg overflow-hidden mb-1">
-                      <img 
-                        src={`/catalog/${sim.image}`} 
-                        alt={sim.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                      <button
-                        onClick={(e) => toggleWishlist(sim, e)}
-                        className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all ${
-                          isFav ? 'bg-[#9271BF] text-white' : 'bg-white/80 text-[#292331]/60 hover:text-[#9271BF]'
-                        }`}
-                      >
-                        <Heart className="w-2 h-2 fill-current" />
-                      </button>
-                    </div>
+                  return (
+                    <div
+                      key={sim.id}
+                      onClick={() => selectGarment(sim)}
+                      className={`group relative rounded-xl p-1 border transition-all cursor-pointer flex flex-col justify-between h-full max-h-[140px] ${
+                        isSelected
+                          ? 'bg-[#B49AF4]/20 border-2 border-[#B49AF4] shadow-xs'
+                          : 'bg-white/[0.05] hover:bg-white/[0.09] border-white/[0.12]'
+                      }`}
+                    >
+                      <div className="relative aspect-square rounded-lg overflow-hidden mb-1 bg-white/[0.02]">
+                        <img 
+                          src={`/catalog/${sim.image}`} 
+                          alt={sim.name}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <button
+                          onClick={(e) => toggleWishlist(sim, e)}
+                          className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                            isFav ? 'bg-[#B49AF4] text-[#191723]' : 'bg-[#191723]/70 text-[#AAA5B5] hover:text-[#B49AF4]'
+                          }`}
+                        >
+                          <Heart className="w-2 h-2 fill-current" />
+                        </button>
+                      </div>
 
-                    <div>
-                      <h4 className="text-[9px] font-semibold text-[#292331] leading-tight line-clamp-1">
-                        {sim.name}
-                      </h4>
-                      <p className="text-[8.5px] text-[#6D6574]">
-                        {sim.price}
-                      </p>
-                    </div>
+                      <div>
+                        <h4 className="text-[9px] font-semibold text-[#F5F1F8] leading-tight line-clamp-1">
+                          {sim.name}
+                        </h4>
+                        <p className="text-[8.5px] text-[#AAA5B5] font-mono">
+                          {sim.price}
+                        </p>
+                      </div>
 
-                    <div className="mt-0.5 pt-0.5 border-t border-white/60 text-center">
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {matchVal}% match
-                      </span>
+                      <div className="mt-0.5 pt-0.5 border-t border-white/[0.08] text-center">
+                        <span className="text-[8px] font-mono font-semibold px-1 py-0.5 rounded-full bg-[#B49AF4]/15 text-[#B49AF4] border border-[#B49AF4]/30 block truncate" title={`Pearson Correlation: ${corrVal >= 0 ? '+' : ''}${corrVal.toFixed(3)}`}>
+                          r: {corrVal >= 0 ? '+' : ''}{corrVal.toFixed(2)} ({pctVal}%)
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
           {/* SECTION 03: Style It With (Color Harmony & Category Matching) */}
-          <div className="mauve-glass-panel rounded-2xl p-3 flex-1 min-h-0 flex flex-col justify-between shadow-[0_8px_24px_rgba(41,35,49,0.05)]">
-            <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
-              <div className="w-5 h-5 rounded-full bg-[#9271BF] text-white font-bold text-[10px] flex items-center justify-center shadow-2xs">
+          <div className="glass-panel rounded-2xl p-2.5 flex-1 min-h-0 flex flex-col justify-between shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-[#B49AF4] text-[#191723] font-bold text-[10px] flex items-center justify-center shadow-xs">
                 3
               </div>
               <div>
-                <h3 className="text-xs font-serif font-bold text-[#292331] leading-tight">
+                <h3 className="text-xs font-serif font-bold text-[#F5F1F8] leading-tight">
                   Style It With
                 </h3>
-                <p className="text-[9.5px] text-[#6D6574]">
-                  Complementary Outfit Pieces
+                <p className="text-[9.5px] text-[#AAA5B5]">
+                  {selectedOutfit.dress 
+                    ? 'Complementary Dresses & Evening Ensembles' 
+                    : (lastSelectedCategory === 'bottoms' ? 'Compatible Tops & Blouses' : 'Compatible Bottoms & Trousers')}
                 </p>
               </div>
             </div>
@@ -602,11 +619,11 @@ export default function StudioPage() {
                     onClick={() => selectGarment(item)}
                     className={`group relative rounded-xl p-1 border transition-all cursor-pointer flex flex-col justify-between h-full max-h-[140px] ${
                       isEquipped 
-                        ? 'bg-white/85 border-2 border-[#9271BF] shadow-xs' 
-                        : 'bg-white/45 hover:bg-white/70 border-white/60'
+                        ? 'bg-[#B49AF4]/20 border-2 border-[#B49AF4] shadow-xs' 
+                        : 'bg-white/[0.05] hover:bg-white/[0.09] border-white/[0.12]'
                     }`}
                   >
-                    <div className="relative aspect-square rounded-lg overflow-hidden mb-1">
+                    <div className="relative aspect-square rounded-lg overflow-hidden mb-1 bg-white/[0.02]">
                       <img 
                         src={`/catalog/${item.image}`} 
                         alt={item.name}
@@ -615,7 +632,7 @@ export default function StudioPage() {
                       <button
                         onClick={(e) => toggleWishlist(item, e)}
                         className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all ${
-                          isFav ? 'bg-[#9271BF] text-white' : 'bg-white/80 text-[#292331]/60 hover:text-[#9271BF]'
+                          isFav ? 'bg-[#B49AF4] text-[#191723]' : 'bg-[#191723]/70 text-[#AAA5B5] hover:text-[#B49AF4]'
                         }`}
                       >
                         <Heart className="w-2 h-2 fill-current" />
@@ -623,16 +640,16 @@ export default function StudioPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-[9px] font-semibold text-[#292331] leading-tight line-clamp-1">
+                      <h4 className="text-[9px] font-semibold text-[#F5F1F8] leading-tight line-clamp-1">
                         {item.name}
                       </h4>
-                      <p className="text-[8.5px] text-[#6D6574]">
+                      <p className="text-[8.5px] text-[#AAA5B5] font-mono">
                         {item.price}
                       </p>
                     </div>
 
-                    <div className="mt-0.5 pt-0.5 border-t border-white/60 text-center">
-                      <span className="text-[8px] font-semibold text-[#9271BF]">
+                    <div className="mt-0.5 pt-0.5 border-t border-white/[0.08] text-center">
+                      <span className="text-[8px] font-semibold text-[#B49AF4]">
                         {isEquipped ? 'Equipped' : '+ Pair'}
                       </span>
                     </div>
@@ -643,24 +660,24 @@ export default function StudioPage() {
           </div>
 
           {/* SECTION 04: Find Similar Online (Compact Shopping Links) */}
-          <div className="mauve-glass-panel rounded-2xl p-2.5 flex-shrink-0 shadow-[0_8px_24px_rgba(41,35,49,0.05)]">
+          <div className="glass-panel rounded-2xl p-2.5 flex-shrink-0 shadow-[0_16px_48px_rgba(0,0,0,0.3)]">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="text-[9px] font-bold text-[#6D6574] uppercase tracking-wider">
+              <span className="text-[9px] font-bold text-[#AAA5B5] uppercase tracking-wider">
                 Find Similar Online
               </span>
             </div>
 
             <div className="grid grid-cols-4 gap-1.5">
               {[
-                { name: 'Myntra', badgeColor: '#D1286B' },
-                { name: 'AJIO', badgeColor: '#2C4152' },
-                { name: 'H&M', badgeColor: '#B80010' },
-                { name: 'ZARA', badgeColor: '#1A181C' },
+                { name: 'Myntra', badgeColor: '#FF3F6C' },
+                { name: 'AJIO', badgeColor: '#3BB0E6' },
+                { name: 'H&M', badgeColor: '#E50010' },
+                { name: 'ZARA', badgeColor: '#F5F1F8' },
               ].map((retailer) => (
                 <button
                   key={retailer.name}
                   onClick={() => handleRetailerSearch(retailer.name)}
-                  className="py-1 px-1.5 rounded-lg bg-white/50 hover:bg-white text-[10px] font-bold border border-white/70 transition-all flex items-center justify-center gap-0.5 cursor-pointer shadow-2xs hover:shadow-xs"
+                  className="py-1 px-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-[10px] font-bold border border-white/[0.12] transition-all flex items-center justify-center gap-0.5 cursor-pointer shadow-xs hover:border-[#B49AF4]/40"
                   style={{ color: retailer.badgeColor }}
                 >
                   <span>{retailer.name}</span>

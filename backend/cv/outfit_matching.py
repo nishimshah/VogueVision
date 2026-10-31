@@ -12,15 +12,20 @@ PRODUCTS_JSON = os.path.join(BASE_DIR, "data", "products.json")
 
 # Color compatibility matrix based on fashion styling principles
 COLOR_HARMONY_RULES = {
-    "pink": ["blue", "cream", "white", "beige", "dusty-rose"],
+    "pink": ["blue", "cream", "white", "beige", "dusty-rose", "black"],
     "red": ["blue", "black", "white", "cream", "beige"],
-    "blue": ["white", "cream", "beige", "black", "tan", "pink"],
+    "burgundy": ["black", "cream", "beige", "white", "tan"],
+    "champagne": ["black", "cream", "beige", "white"],
+    "grey": ["blue", "cream", "black", "white", "beige"],
+    "blue": ["white", "cream", "beige", "black", "tan", "grey"],
     "green": ["cream", "white", "beige", "tan", "black"],
-    "purple": ["cream", "white", "blue", "charcoal", "plum", "beige"],
-    "white": ["blue", "black", "pink", "beige", "green", "cream"],
-    "cream": ["blue", "beige", "tan", "pink", "green", "white"],
-    "beige": ["white", "cream", "blue", "black", "pink", "green"],
-    "black": ["white", "cream", "grey", "beige", "blue", "purple"]
+    "purple": ["cream", "white", "blue", "charcoal", "plum", "beige", "black"],
+    "white": ["blue", "black", "cream", "beige", "burgundy", "grey"],
+    "cream": ["blue", "beige", "tan", "black", "white", "burgundy"],
+    "beige": ["white", "cream", "blue", "black", "tan"],
+    "black": ["white", "cream", "grey", "beige", "blue", "burgundy", "champagne"],
+    "tan": ["white", "cream", "blue", "black", "beige"],
+    "nude": ["white", "cream", "black", "beige"]
 }
 
 def load_catalog():

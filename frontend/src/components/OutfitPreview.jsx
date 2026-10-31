@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Eye, Grid, Shirt, Layers, AlertCircle, ArrowRight, 
-  ChevronLeft, ChevronRight, Heart, RotateCcw, Sparkles 
+  Eye, Grid, Shirt, Layers, Sparkles, ArrowRight, 
+  ChevronLeft, ChevronRight, Heart, RotateCcw, Check
 } from 'lucide-react';
 
 import outfit1Img from '../assets/mannequin/outfit_1.jpg';
@@ -11,7 +11,6 @@ import outfit4Img from '../assets/mannequin/outfit_4.jpg';
 import outfit5Img from '../assets/mannequin/outfit_5.jpg';
 import outfit6Img from '../assets/mannequin/outfit_6.jpg';
 import outfit7Img from '../assets/mannequin/outfit_7.jpg';
-import neutralMannequinImg from '../assets/mannequin/neutral_base.jpg';
 
 export const PREDEFINED_OUTFITS = [
   {
@@ -81,8 +80,8 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 6,
-    name: "Look 6 / 7 — Black Midi Dress",
-    shortName: "Black Midi Dress",
+    name: "Look 6 / 7 — Black Tailored Midi Dress",
+    shortName: "Black Cocktail Dress",
     occasion: "Party",
     image: outfit6Img,
     topId: null,
@@ -94,7 +93,7 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 7,
-    name: "Look 7 / 7 — Beige Sleeveless Dress",
+    name: "Look 7 / 7 — Beige Sleeveless Midi Dress",
     shortName: "Beige Sleeveless Dress",
     occasion: "Casual",
     image: outfit7Img,
@@ -116,7 +115,7 @@ export default function OutfitPreview({
   activeLookIndex,
   onApplyPreset
 }) {
-  const [viewMode, setViewMode] = useState('mannequin'); // 'mannequin' | 'board'
+  const [viewMode, setViewMode] = useState('auto'); // 'auto' | 'mannequin' | 'board'
 
   const top = selectedOutfit?.top;
   const bottom = selectedOutfit?.bottom;
@@ -125,7 +124,11 @@ export default function OutfitPreview({
   // Find exact matching predefined realistic outfit
   const matchedPreset = PREDEFINED_OUTFITS.find(preset => preset.matches(selectedOutfit));
 
-  // Find closest suggestion if current combination is unsupported
+  // Determine effective view: if no exact matched preset and auto mode -> render Outfit Board fallback
+  const isDirectMatch = Boolean(matchedPreset);
+  const effectiveView = viewMode === 'auto' ? (isDirectMatch ? 'mannequin' : 'board') : viewMode;
+
+  // Find closest suggestion if current combination is mix & match
   const suggestedPreset = PREDEFINED_OUTFITS.find(p => {
     if (dress && p.dressId === dress.id) return true;
     if (top && p.topId === top.id) return true;
@@ -135,25 +138,33 @@ export default function OutfitPreview({
 
   const currentLook = PREDEFINED_OUTFITS[activeLookIndex] || PREDEFINED_OUTFITS[0];
 
+  // Dynamic look title
+  const displayedLookTitle = isDirectMatch 
+    ? matchedPreset.shortName 
+    : (dress ? dress.name : `${top?.name || 'Selected Top'} + ${bottom?.name || 'Selected Bottom'}`);
+
   return (
     <div className="w-full h-full flex flex-col justify-between items-center min-h-0 select-none">
       
-      {/* View Toggle Bar (Extremely Minimal) */}
+      {/* Top Header & View Toggle Bar */}
       <div className="w-full flex items-center justify-between px-2 mb-1.5 flex-shrink-0">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#9271BF]" />
-          <span className="text-[11px] font-semibold text-[#292331] uppercase tracking-wider">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#B49AF4] animate-pulse" />
+          <span className="text-[11px] font-semibold text-[#F5F1F8] uppercase tracking-wider">
             Virtual Showroom
+          </span>
+          <span className="text-[10px] text-[#AAA5B5] hidden sm:inline">
+            • {isDirectMatch ? 'Studio Mannequin' : 'Outfit Composition'}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 p-0.5 rounded-full bg-white/45 border border-white/60">
+        <div className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.05] border border-white/[0.12]">
           <button
             onClick={() => setViewMode('mannequin')}
             className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
-              viewMode === 'mannequin'
-                ? 'bg-white text-[#292331] shadow-2xs'
-                : 'text-[#6D6574] hover:text-[#292331]'
+              effectiveView === 'mannequin'
+                ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/50 text-[#F5F1F8] shadow-xs'
+                : 'text-[#AAA5B5] hover:text-[#F5F1F8]'
             }`}
           >
             Mannequin
@@ -161,9 +172,9 @@ export default function OutfitPreview({
           <button
             onClick={() => setViewMode('board')}
             className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
-              viewMode === 'board'
-                ? 'bg-white text-[#292331] shadow-2xs'
-                : 'text-[#6D6574] hover:text-[#292331]'
+              effectiveView === 'board'
+                ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/50 text-[#F5F1F8] shadow-xs'
+                : 'text-[#AAA5B5] hover:text-[#F5F1F8]'
             }`}
           >
             Outfit Board
@@ -172,201 +183,168 @@ export default function OutfitPreview({
       </div>
 
       {/* CENTER MANNEQUIN DISPLAY CHAMBER */}
-      <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden mannequin-chamber border border-white/70 shadow-[0_10px_30px_rgba(41,35,49,0.06)] flex items-center justify-center p-1.5">
+      <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden mannequin-chamber border border-white/[0.14] shadow-[0_16px_48px_rgba(0,0,0,0.5)] flex items-center justify-center p-2">
         
-        {viewMode === 'mannequin' ? (
-          matchedPreset ? (
-            /* A. Verified Realistic Predefined Outfit Image */
-            <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-200">
-              <img
-                src={matchedPreset.image}
-                alt={matchedPreset.name}
-                className="w-full h-full object-contain rounded-xl"
-              />
+        {effectiveView === 'mannequin' && matchedPreset ? (
+          /* A. Verified Realistic Predefined Outfit Image */
+          <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-200">
+            <img
+              src={matchedPreset.image}
+              alt={matchedPreset.name}
+              className="w-full h-full object-contain rounded-xl"
+            />
 
-              {/* Minimal Verified Tag */}
-              <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-white/70 backdrop-blur-md border border-white/80 text-[9px] font-bold text-[#9271BF] shadow-2xs pointer-events-none">
-                Verified Look
-              </div>
-            </div>
-          ) : (
-            /* B. Realistic Preview Unavailable State */
-            <div className="relative w-full h-full flex flex-col items-center justify-between p-5 text-center">
-              <div className="absolute inset-0 opacity-15 pointer-events-none flex items-center justify-center">
-                <img
-                  src={neutralMannequinImg}
-                  alt="Neutral Mannequin"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
-              <div className="relative z-10 w-full pt-3">
-                <div className="w-9 h-9 rounded-full bg-[#9271BF]/10 border border-[#9271BF]/20 flex items-center justify-center mx-auto mb-2 text-[#9271BF]">
-                  <AlertCircle className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-serif font-bold text-[#292331]">
-                  Realistic preview unavailable for this combination
-                </h4>
-                <p className="text-[10px] text-[#6D6574] max-w-[260px] mx-auto mt-0.5 leading-snug">
-                  Only verified combinations are presented on the showroom mannequin.
-                </p>
-              </div>
-
-              {/* Suggestion Card */}
-              <div className="relative z-10 w-full max-w-[280px] p-3 rounded-xl bg-white/60 border border-white/80 text-left shadow-2xs">
-                <span className="text-[9px] uppercase font-bold text-[#9271BF] block">
-                  Recommended Alternative
-                </span>
-                <p className="text-[11px] font-semibold text-[#292331] truncate">
-                  {suggestedPreset.name}
-                </p>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <button
-                    onClick={() => onApplyPreset(suggestedPreset.id)}
-                    className="flex-1 py-1 px-2.5 rounded-full text-[10.5px] font-bold bg-[#9271BF] text-white hover:bg-[#815EAE] transition-all flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <span>Equip Look</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('board')}
-                    className="py-1 px-2.5 rounded-full text-[10.5px] font-medium text-[#6D6574] hover:text-[#292331] bg-white/70 hover:bg-white transition-all cursor-pointer"
-                  >
-                    Outfit Board
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative z-10 text-[9.5px] text-[#6D6574]/80 pb-1">
-                Select a verified outfit or switch to the Outfit Board view.
-              </div>
-            </div>
-          )
-        ) : (
-          /* C. Curated Outfit Board View */
-          <div className="w-full h-full p-3.5 flex flex-col justify-between">
-            <div className="text-center mb-1">
-              <span className="text-[9.5px] uppercase font-bold tracking-widest text-[#9271BF]">
-                Curated Outfit Board
-              </span>
-              <p className="text-xs font-serif font-bold text-[#292331]">
-                Active Selected Pieces
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 flex-1 items-center max-w-[340px] mx-auto w-full">
-              {/* Top / Dress */}
-              <div className="bg-white/55 border border-white/70 rounded-xl p-2 flex flex-col items-center text-center shadow-2xs">
-                <span className="text-[9px] uppercase font-bold text-[#9271BF] mb-0.5">
-                  {dress ? 'Dress' : 'Top'}
-                </span>
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/80 border border-white/70 mb-1">
-                  {(dress || top) ? (
-                    <img
-                      src={`/catalog/${(dress || top).image}`}
-                      alt={(dress || top).name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[#6D6574]">
-                      <Shirt className="w-5 h-5 opacity-40" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-[9.5px] font-semibold text-[#292331] line-clamp-1">
-                  {(dress || top)?.name || 'None'}
-                </p>
-                <p className="text-[9px] text-[#6D6574]">
-                  {(dress || top)?.price || '—'}
-                </p>
-              </div>
-
-              {/* Bottom (Hidden if dress) */}
-              <div className={`bg-white/55 border border-white/70 rounded-xl p-2 flex flex-col items-center text-center shadow-2xs ${dress ? 'opacity-40' : ''}`}>
-                <span className="text-[9px] uppercase font-bold text-[#9271BF] mb-0.5">
-                  {dress ? 'Covered' : 'Bottom'}
-                </span>
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/80 border border-white/70 mb-1">
-                  {!dress && bottom ? (
-                    <img
-                      src={`/catalog/${bottom.image}`}
-                      alt={bottom.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[#6D6574]">
-                      <Layers className="w-5 h-5 opacity-40" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-[9.5px] font-semibold text-[#292331] line-clamp-1">
-                  {dress ? 'Dress active' : (bottom?.name || 'None')}
-                </p>
-                <p className="text-[9px] text-[#6D6574]">
-                  {dress ? '—' : (bottom?.price || '—')}
-                </p>
-              </div>
-            </div>
-
-            <div className="text-center pt-1">
-              <button
-                onClick={() => setViewMode('mannequin')}
-                className="text-[10px] text-[#9271BF] font-semibold hover:underline"
-              >
-                Back to Mannequin Display →
-              </button>
+            {/* Verified Badge */}
+            <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#191723]/80 backdrop-blur-md border border-[#B49AF4]/40 text-[9.5px] font-bold text-[#B49AF4] shadow-xs pointer-events-none flex items-center gap-1">
+              <Check className="w-3 h-3 text-[#B49AF4]" />
+              Verified Studio Look
             </div>
           </div>
-        )}
+        ) : (
+          /* B. Polished Fallback: Curated Outfit Composition Board */
+          <div className="relative w-full h-full flex flex-col justify-between p-4 animate-in fade-in duration-200 overflow-y-auto">
+            {/* Top Composition Badge */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="px-2.5 py-1 rounded-full bg-[#B49AF4]/15 border border-[#B49AF4]/30 text-[9.5px] font-semibold text-[#B49AF4]">
+                Outfit Composition Preview • Mix & Match
+              </div>
+              <span className="text-[10px] text-[#AAA5B5]">
+                {dress ? '1/1 Piece' : '2/2 Separates'}
+              </span>
+            </div>
 
+            {/* Visual Item Layout */}
+            {dress ? (
+              /* Single Dress View */
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-48 h-64 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
+                  <img
+                    src={`/catalog/${dress.image}`}
+                    alt={dress.name}
+                    className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="mt-2 text-center">
+                  <span className="text-xs font-semibold text-[#F5F1F8]">{dress.name}</span>
+                  <span className="text-[11px] text-[#B49AF4] block font-mono">{dress.price}</span>
+                </div>
+              </div>
+            ) : (
+              /* Top + Bottom Separates Grid */
+              <div className="flex-1 flex items-center justify-center gap-4">
+                {/* Top Garment */}
+                <div className="flex flex-col items-center">
+                  <div className="w-36 h-48 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
+                    {top ? (
+                      <img
+                        src={`/catalog/${top.image}`}
+                        alt={top.name}
+                        className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-[#AAA5B5]">
+                        <Shirt className="w-6 h-6 mb-1 text-[#AAA5B5]" />
+                        <span className="text-[10px]">Select Top</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-1.5 text-center max-w-[140px]">
+                    <span className="text-[11px] font-semibold text-[#F5F1F8] line-clamp-1">{top?.name || 'Top'}</span>
+                    <span className="text-[10px] text-[#B49AF4] font-mono">{top?.price}</span>
+                  </div>
+                </div>
+
+                <div className="text-xl font-light text-[#B49AF4]/40">+</div>
+
+                {/* Bottom Garment */}
+                <div className="flex flex-col items-center">
+                  <div className="w-36 h-48 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
+                    {bottom ? (
+                      <img
+                        src={`/catalog/${bottom.image}`}
+                        alt={bottom.name}
+                        className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-[#AAA5B5]">
+                        <Layers className="w-6 h-6 mb-1 text-[#AAA5B5]" />
+                        <span className="text-[10px]">Select Bottom</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-1.5 text-center max-w-[140px]">
+                    <span className="text-[11px] font-semibold text-[#F5F1F8] line-clamp-1">{bottom?.name || 'Bottom'}</span>
+                    <span className="text-[10px] text-[#B49AF4] font-mono">{bottom?.price}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Link to Closest Verified Mannequin Look */}
+            {suggestedPreset && (
+              <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[10.5px]">
+                <span className="text-[#AAA5B5]">
+                  Matching Predefined Look available:
+                </span>
+                <button
+                  onClick={() => onApplyPreset(suggestedPreset.id)}
+                  className="text-[#B49AF4] hover:text-[#C4ADFA] font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  View {suggestedPreset.shortName}
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* COMPACT GLASS TOOLBAR (Directly Below Mannequin - Part 3) */}
-      <div className="w-full mt-2 flex items-center justify-between px-3 py-1.5 rounded-full bg-white/45 backdrop-blur-md border border-white/70 shadow-xs flex-shrink-0">
-        
-        {/* Navigation arrows & Outfit label */}
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <button 
+      {/* COMPACT GLASS TOOLBAR DIRECTLY BELOW THE MANNEQUIN */}
+      {/* Layout: [←] Look X / 7 — [Look Title] [→] [♡ Save] [↺ Reset] */}
+      <div className="w-full mt-2 flex items-center justify-between px-3 py-1.5 rounded-xl glass-toolbar border border-white/[0.14] flex-shrink-0 shadow-lg">
+        {/* Navigation Arrows & Current Look Name */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
             onClick={onPrevLook}
-            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white flex items-center justify-center text-[#292331] shadow-2xs transition-all cursor-pointer flex-shrink-0"
-            title="Previous Curated Look"
+            className="w-6 h-6 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] flex items-center justify-center text-[#F5F1F8] hover:text-[#B49AF4] transition-all cursor-pointer flex-shrink-0"
+            title="Previous Look"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
-          <span className="text-[11px] font-semibold text-[#292331] truncate px-1">
-            {currentLook.name}
+          <span className="text-[11px] font-medium text-[#F5F1F8] truncate max-w-[260px] tracking-wide">
+            {isDirectMatch ? currentLook.name : `Mix & Match — ${displayedLookTitle}`}
           </span>
 
-          <button 
+          <button
             onClick={onNextLook}
-            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white flex items-center justify-center text-[#292331] shadow-2xs transition-all cursor-pointer flex-shrink-0"
-            title="Next Curated Look"
+            className="w-6 h-6 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] flex items-center justify-center text-[#F5F1F8] hover:text-[#B49AF4] transition-all cursor-pointer flex-shrink-0"
+            title="Next Look"
           >
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Action buttons: Save & Reset */}
-        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+        {/* Action Buttons: Save & Reset */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             onClick={onSaveOutfit}
-            className="px-2.5 py-1 rounded-full text-[10.5px] font-semibold bg-[#9271BF] text-white hover:bg-[#815EAE] shadow-xs flex items-center gap-1 transition-all cursor-pointer"
-            title="Save current look to wardrobe"
+            className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] text-[10.5px] font-medium text-[#F5F1F8] hover:text-[#B49AF4] transition-all flex items-center gap-1 cursor-pointer"
+            title="Save Outfit"
           >
-            <Heart className="w-3 h-3 fill-white" />
-            <span>Save</span>
+            <Heart className="w-3 h-3 text-[#B49AF4]" />
+            Save
           </button>
 
           <button
             onClick={onResetOutfit}
-            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white text-[#6D6574] hover:text-[#292331] flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-            title="Reset to default outfit"
+            className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] text-[10.5px] font-medium text-[#AAA5B5] hover:text-[#F5F1F8] transition-all flex items-center gap-1 cursor-pointer"
+            title="Reset Outfit"
           >
             <RotateCcw className="w-3 h-3" />
+            Reset
           </button>
         </div>
-
       </div>
 
     </div>

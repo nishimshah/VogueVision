@@ -7,93 +7,99 @@ export default function HowItWorksModal({ isOpen, onClose }) {
   const steps = [
     {
       num: "01",
-      icon: <Layers className="w-4 h-4 text-[#9271BF]" />,
+      icon: <Layers className="w-4 h-4 text-[#B49AF4]" />,
       title: "Color Space Conversion & 3D HSV Representation",
       description: "Fashion images are loaded and converted from BGR to the HSV (Hue, Saturation, Value) color cylinder. Unlike RGB where brightness corrupts chrominance, HSV decouples pure chromatic tone (Hue) from lighting variations and shadows."
     },
     {
       num: "02",
-      icon: <Cpu className="w-4 h-4 text-[#9271BF]" />,
+      icon: <Cpu className="w-4 h-4 text-[#B49AF4]" />,
       title: "512-Dimensional Color Histogram Extraction",
       description: "We compute a multi-dimensional histogram using cv2.calcHist with 8 bins each across Hue, Saturation, and Value (8 × 8 × 8 = 512 bins). The histogram is normalized (L1/L2) so that variations in image resolution do not bias color distribution."
     },
     {
       num: "03",
-      icon: <Sliders className="w-4 h-4 text-[#9271BF]" />,
+      icon: <Sliders className="w-4 h-4 text-[#B49AF4]" />,
       title: "Correlation Metric (cv2.compareHist)",
       description: "Similarity between catalog garments is calculated using Pearson correlation (HISTCMP_CORREL). This produces a genuine mathematical similarity score in [-1.0, +1.0], normalized to an intuitive percentage match without generative AI hallucinations."
     },
     {
       num: "04",
-      icon: <Palette className="w-4 h-4 text-[#9271BF]" />,
+      icon: <Palette className="w-4 h-4 text-[#B49AF4]" />,
       title: "K-Means Dominant Color Extraction",
       description: "Garment pixels are clustered using cv2.kmeans with k=4. Cluster centers reveal primary and secondary color palettes, filtering out studio background illumination and identifying true garment tones."
     },
     {
       num: "05",
-      icon: <CheckCircle2 className="w-4 h-4 text-[#9271BF]" />,
+      icon: <CheckCircle2 className="w-4 h-4 text-[#B49AF4]" />,
       title: "Color Harmony Outfit Coordination",
       description: "Complementary, analogous, and monochromatic color harmony matrices match the selected piece with trousers, skirts, footwear, and bags. High-harmony candidates are automatically ranked and rendered in the virtual glass studio."
     }
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#292331]/40 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-2xl bg-white/90 backdrop-blur-2xl border border-white/80 rounded-3xl p-6 shadow-[0_20px_50px_rgba(41,35,49,0.18)] max-h-[90vh] overflow-y-auto text-[#292331]"
+        className="relative w-full max-w-2xl bg-[#211E2B]/95 backdrop-blur-2xl border border-white/[0.16] rounded-3xl p-6 shadow-[0_24px_60px_rgba(0,0,0,0.6)] max-h-[90vh] overflow-y-auto text-[#F5F1F8]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#292331] transition-all cursor-pointer"
+          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.15] flex items-center justify-center text-[#F5F1F8] transition-all cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Modal Header */}
         <div className="mb-5">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-[#9271BF]">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-[#B49AF4]">
             Computer Vision Architecture
           </span>
-          <h2 className="text-2xl font-serif font-bold text-[#292331] mt-0.5">
+          <h2 className="text-2xl font-serif font-bold text-[#F5F1F8] mt-0.5">
             How VogueVision Works
           </h2>
-          <p className="text-xs text-[#6D6574] mt-1">
-            An end-to-end explainable Computer Vision pipeline for fashion retrieval and coordination.
+          <p className="text-xs text-[#AAA5B5] mt-1">
+            Genuine OpenCV image processing pipelines without cloud black-box generative models.
           </p>
         </div>
 
-        {/* Workflow Steps */}
+        {/* Algorithm Steps */}
         <div className="space-y-3">
-          {steps.map((s) => (
+          {steps.map((s, idx) => (
             <div 
-              key={s.num}
-              className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/60 border border-white/80 shadow-xs hover:border-[#9271BF]/30 transition-all"
+              key={idx}
+              className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-[#B49AF4]/30 transition-all"
             >
-              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-[#9271BF]/10 border border-[#9271BF]/20 flex items-center justify-center">
-                {s.icon}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#9271BF]">{s.num}</span>
-                  <h3 className="text-sm font-semibold text-[#292331]">{s.title}</h3>
+              <div className="flex items-center gap-3 mb-1.5">
+                <span className="text-xs font-mono font-bold text-[#B49AF4] px-2 py-0.5 rounded-full bg-[#B49AF4]/10 border border-[#B49AF4]/20">
+                  {s.num}
+                </span>
+                <div className="p-1.5 rounded-lg bg-white/[0.05]">
+                  {s.icon}
                 </div>
-                <p className="text-xs text-[#6D6574] leading-relaxed mt-0.5">
-                  {s.description}
-                </p>
+                <h3 className="text-sm font-semibold text-[#F5F1F8]">
+                  {s.title}
+                </h3>
               </div>
+              <p className="text-xs text-[#AAA5B5] leading-relaxed pl-10">
+                {s.description}
+              </p>
             </div>
           ))}
         </div>
 
-        {/* Technical Viva Callout */}
-        <div className="mt-5 p-3.5 rounded-2xl bg-[#E5DEE8]/60 border border-white/60">
-          <p className="text-xs text-[#292331] leading-relaxed font-mono">
-            <strong className="text-[#9271BF]">Key Formula:</strong> Pearson Correlation Coefficient<br/>
-            <code>d(H1, H2) = Σ (H1'(I)·H2'(I)) / √[ Σ (H1'(I)²·Σ (H2'(I)²) ]</code><br/>
-            Evaluated across 512 normalized bins using OpenCV <code>cv2.compareHist(HISTCMP_CORREL)</code>.
-          </p>
+        {/* Modal Footer */}
+        <div className="mt-6 pt-4 border-t border-white/[0.10] flex items-center justify-between">
+          <span className="text-[11px] text-[#AAA5B5]">
+            OpenCV 4.10.0 • Python Flask • Vite React
+          </span>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl text-xs font-semibold glass-btn-primary cursor-pointer"
+          >
+            Got It
+          </button>
         </div>
       </div>
     </div>
