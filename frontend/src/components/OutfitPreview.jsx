@@ -121,142 +121,114 @@ export default function OutfitPreview({
           </div>
         ) : (
           /* ======================================================== */
-          /* 2. MIX & MATCH OUTFIT BOARD (For custom pairings)       */
+          /* 2. MIX & MATCH OUTFIT BOARD (Side-by-Side Studio Styling) */
           /* ======================================================== */
-          <div className="w-full h-full flex flex-col justify-between p-2.5 relative animate-in fade-in duration-200 overflow-y-auto">
-            {/* Board Header Bar */}
-            <div className="w-full flex items-center justify-between pb-1.5 border-b border-white/[0.08] flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-[#B49AF4]/20 border border-[#B49AF4]/40 text-[9.5px] font-bold text-[#B49AF4] flex items-center gap-1">
-                  <Sparkles className="w-2.5 h-2.5 text-[#B49AF4]" />
-                  Mix & Match Outfit Board
-                </span>
-              </div>
+          <div className="w-full h-full flex flex-col justify-between items-center p-3 relative animate-in fade-in duration-300 overflow-hidden">
+            
+            {/* Subtle Circular Lavender Studio Glow Backdrop */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="w-[320px] h-[320px] rounded-full bg-[#B49AF4]/10 blur-3xl" />
+            </div>
+
+            {/* Refined Elliptical Platform / Studio Podium beneath garments */}
+            <div className="absolute bottom-16 w-[88%] max-w-[420px] h-7 rounded-[100%] bg-gradient-to-r from-transparent via-[#B49AF4]/25 to-transparent blur-md pointer-events-none" />
+            <div className="absolute bottom-18 w-[72%] max-w-[360px] h-[1px] bg-gradient-to-r from-transparent via-[#B49AF4]/40 to-transparent pointer-events-none" />
+
+            {/* Top Board Label Badge */}
+            <div className="w-full flex items-center justify-between z-10 flex-shrink-0">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#B49AF4]/15 border border-[#B49AF4]/30 text-[9.5px] font-semibold text-[#B49AF4] flex items-center gap-1 shadow-xs">
+                <Sparkles className="w-2.5 h-2.5 text-[#B49AF4]" />
+                Mix & Match Studio Board
+              </span>
               <span className="text-[9px] font-mono text-[#AAA5B5]">
-                Custom Styled Look
+                Custom Editorial Styling
               </span>
             </div>
 
-            {/* Main Content Area */}
+            {/* Main Garment Composition Stage */}
             {dress ? (
-              /* Standalone Dress Card */
-              <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-3 my-1.5 rounded-xl bg-white/[0.03] border border-white/[0.10] backdrop-blur-md relative overflow-hidden group">
-                <div className="relative h-full max-h-[340px] w-full flex items-center justify-center">
+              /* Standalone Dress Presentation */
+              <div className="relative z-10 flex-1 min-h-0 w-full flex items-center justify-center py-2">
+                <div className="relative max-h-full max-w-[280px] sm:max-w-[320px] h-full flex items-center justify-center group">
                   <img
                     src={`/catalog/${dress.image}`}
                     alt={dress.name}
-                    className="max-h-full max-w-full object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-105"
+                    className="max-h-full max-w-full object-contain rounded-xl drop-shadow-[0_20px_35px_rgba(0,0,0,0.7)] transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-[#191723]/80 border border-white/[0.12] text-[8.5px] font-mono text-[#B49AF4] uppercase">
-                    One-Piece Dress
-                  </div>
-                </div>
-                <div className="w-full mt-2 pt-1.5 border-t border-white/[0.06] flex items-center justify-between flex-shrink-0">
-                  <span className="text-xs font-semibold text-[#F5F1F8] truncate">{dress.name}</span>
-                  <span className="text-[11px] font-mono text-[#B49AF4] font-medium">{dress.price}</span>
                 </div>
               </div>
             ) : (
-              /* Top + Bottom Editorial Pair */
-              <div className="flex-1 min-h-0 flex flex-col justify-between py-1 gap-1.5">
-                {/* Top Garment Card */}
-                <div className="flex-1 min-h-0 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.10] backdrop-blur-md p-2 flex items-center gap-3 transition-all group shadow-xs">
-                  <div className="w-24 sm:w-28 h-full rounded-lg overflow-hidden bg-black/20 flex items-center justify-center flex-shrink-0 border border-white/[0.06]">
+              /* Side-by-Side Top and Bottom Composition */
+              <div className="relative z-10 flex-1 min-h-0 w-full flex items-center justify-center gap-3 sm:gap-6 px-1 py-1">
+                
+                {/* Selected Top Garment */}
+                <div className="flex-1 h-full min-h-0 max-h-[340px] flex flex-col items-center justify-center group">
+                  <div className="relative w-full h-full flex items-center justify-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-xs shadow-md transition-all group-hover:border-[#B49AF4]/40">
                     {top?.image ? (
                       <img
                         src={`/catalog/${top.image}`}
                         alt={top.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full max-h-[290px] object-contain rounded-lg drop-shadow-[0_16px_30px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <span className="text-[10px] text-[#AAA5B5]">No Top Selected</span>
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className="text-[8.5px] font-mono uppercase tracking-wider text-[#B49AF4] font-semibold">
-                          Selected Top
-                        </span>
-                        {top?.occasion && (
-                          <span className="text-[8px] px-1.5 py-0.2 rounded-full bg-white/[0.06] text-[#AAA5B5] font-mono">
-                            {top.occasion}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-[11px] font-semibold text-[#F5F1F8] leading-tight line-clamp-1">
-                        {top?.name || 'Choose a Top'}
-                      </h4>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] pt-1">
-                      <span className="text-[9px] text-[#AAA5B5]">Catalog Piece</span>
-                      <span className="font-mono font-medium text-[#B49AF4]">{top?.price || '—'}</span>
-                    </div>
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-[#191723]/80 border border-white/[0.10] text-[8.5px] font-mono uppercase text-[#AAA5B5]">
+                      Top
+                    </span>
                   </div>
                 </div>
 
-                {/* Elegant Styling Divider */}
-                <div className="relative flex items-center justify-center my-0 flex-shrink-0">
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-[#B49AF4]/30 to-transparent" />
-                  <span className="absolute px-2 py-0.2 rounded-full bg-[#191723] border border-[#B49AF4]/40 text-[8.5px] font-mono font-bold text-[#B49AF4] tracking-widest uppercase">
-                    + Paired With +
-                  </span>
+                {/* Elegant Plus Symbol Connector */}
+                <div className="flex-shrink-0 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-[#191723]/90 border border-[#B49AF4]/40 flex items-center justify-center text-[#B49AF4] text-sm font-semibold shadow-[0_0_12px_rgba(180,154,244,0.3)] select-none">
+                    +
+                  </div>
                 </div>
 
-                {/* Bottom Garment Card */}
-                <div className="flex-1 min-h-0 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.10] backdrop-blur-md p-2 flex items-center gap-3 transition-all group shadow-xs">
-                  <div className="w-24 sm:w-28 h-full rounded-lg overflow-hidden bg-black/20 flex items-center justify-center flex-shrink-0 border border-white/[0.06]">
+                {/* Selected Bottom Garment */}
+                <div className="flex-1 h-full min-h-0 max-h-[340px] flex flex-col items-center justify-center group">
+                  <div className="relative w-full h-full flex items-center justify-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-xs shadow-md transition-all group-hover:border-[#B49AF4]/40">
                     {bottom?.image ? (
                       <img
                         src={`/catalog/${bottom.image}`}
                         alt={bottom.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="w-full h-full max-h-[290px] object-contain rounded-lg drop-shadow-[0_16px_30px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <span className="text-[10px] text-[#AAA5B5]">No Bottom Selected</span>
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <span className="text-[8.5px] font-mono uppercase tracking-wider text-[#B49AF4] font-semibold">
-                          Selected Bottom
-                        </span>
-                        {bottom?.occasion && (
-                          <span className="text-[8px] px-1.5 py-0.2 rounded-full bg-white/[0.06] text-[#AAA5B5] font-mono">
-                            {bottom.occasion}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-[11px] font-semibold text-[#F5F1F8] leading-tight line-clamp-1">
-                        {bottom?.name || 'Choose a Bottom'}
-                      </h4>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] pt-1">
-                      <span className="text-[9px] text-[#AAA5B5]">Catalog Piece</span>
-                      <span className="font-mono font-medium text-[#B49AF4]">{bottom?.price || '—'}</span>
-                    </div>
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-[#191723]/80 border border-white/[0.10] text-[8.5px] font-mono uppercase text-[#AAA5B5]">
+                      Bottom
+                    </span>
                   </div>
                 </div>
+
               </div>
             )}
 
-            {/* Board Footer Notice & Quick-Link */}
-            <div className="w-full mt-1 pt-1.5 border-t border-white/[0.08] flex items-center justify-between flex-shrink-0 text-[10px]">
-              <div className="flex items-center gap-1 text-[#AAA5B5] truncate">
-                <span className="text-[#F5F1F8] font-medium truncate">{displayedLookTitle}</span>
+            {/* Compact, Elegant Information Bar */}
+            <div className="relative z-10 w-full mt-1.5 px-3.5 py-2 rounded-xl bg-[#191723]/90 border border-white/[0.12] backdrop-blur-md shadow-lg flex items-center justify-between gap-3 flex-shrink-0">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-[11.5px] font-semibold text-[#F5F1F8] truncate leading-tight">
+                    {displayedLookTitle}
+                  </h4>
+                </div>
+                <p className="text-[9.5px] text-[#AAA5B5] truncate mt-0.5">
+                  {dress 
+                    ? `${dress.price} • Standalone Dress` 
+                    : `${top?.name || 'Top'} (${top?.price || '—'}) • ${bottom?.name || 'Bottom'} (${bottom?.price || '—'})`}
+                </p>
               </div>
-              {suggestedPreset && (
-                <button
-                  onClick={() => onApplyPreset(suggestedPreset.id)}
-                  className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-[#B49AF4]/15 hover:bg-[#B49AF4]/25 border border-[#B49AF4]/30 text-[#B49AF4] text-[9.5px] font-medium flex items-center gap-1 transition-all cursor-pointer"
-                  title={`View verified studio look: ${suggestedPreset.shortName}`}
-                >
-                  View Studio Look
-                  <ArrowRight className="w-2.5 h-2.5 text-[#B49AF4]" />
-                </button>
+
+              {(dress?.occasion || top?.occasion || bottom?.occasion) && (
+                <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.10] text-[9px] font-mono text-[#E0D5F7]">
+                  {dress?.occasion || (top?.occasion === bottom?.occasion ? top?.occasion : (top?.occasion || bottom?.occasion))}
+                </span>
               )}
             </div>
+
           </div>
         )}
       </div>
