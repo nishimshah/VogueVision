@@ -5,7 +5,7 @@ import {
   ExternalLink, Check, Info, Eye
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import OutfitPreview from '../components/OutfitPreview';
+import OutfitPreview, { PREDEFINED_OUTFITS } from '../components/OutfitPreview';
 import HowItWorksModal from '../components/HowItWorksModal';
 import AboutModal from '../components/AboutModal';
 import SavedOutfitsModal from '../components/SavedOutfitsModal';
@@ -22,7 +22,7 @@ export default function StudioPage() {
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
 
-  // Single Shared Outfit State (Required by Part 3)
+  // Single Shared Outfit State (Required by Part 3 & 5)
   const [selectedOutfit, setSelectedOutfit] = useState({
     top: null,
     bottom: null,
@@ -39,9 +39,8 @@ export default function StudioPage() {
     bags: [],
     accessories: []
   });
-  const [curatedOutfits, setCuratedOutfits] = useState([]);
   const [activeLookIndex, setActiveLookIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState('bottoms'); // 'bottoms', 'shoes', 'bags', 'accessories'
+  const [activeTab, setActiveTab] = useState('bottoms'); // 'bottoms', 'shoes', 'bags', 'dresses'
   const [toastMessage, setToastMessage] = useState(null);
 
   // Wishlist and Saved Outfits (localStorage)
@@ -78,7 +77,7 @@ export default function StudioPage() {
     setTimeout(() => setToastMessage(null), 2800);
   };
 
-  // 1. Initial Load: Fetch catalog and load default initial outfit
+  // 1. Initial Load: Fetch catalog and load default initial outfit (Look 1)
   useEffect(() => {
     async function initCatalog() {
       try {
@@ -87,15 +86,15 @@ export default function StudioPage() {
         const prods = data.products || [];
         setCatalogProducts(prods);
 
-        // Pre-equip default starter outfit:
-        // Top: ID 1 (Blush Floral Puff-Sleeve Top)
-        // Bottom: ID 10 (Light Wash Straight Wide-Leg Jeans)
-        // Shoes: ID 29 (Minimalist White Leather Tennis Sneakers)
-        // Bag: ID 24 (Blush Rose Leather Crossbody Bag)
+        // Pre-equip Look 1:
+        // Top: ID 1 (White Fitted T-Shirt)
+        // Bottom: ID 6 (Blue Straight-Leg Jeans)
+        // Shoes: ID 12 (Minimalist White Tennis Sneakers)
+        // Bag: ID 16 (Structured Tan Leather Tote)
         const defaultTop = prods.find(p => p.id === 1) || prods[0];
-        const defaultBottom = prods.find(p => p.id === 10);
-        const defaultShoes = prods.find(p => p.id === 29);
-        const defaultBag = prods.find(p => p.id === 24);
+        const defaultBottom = prods.find(p => p.id === 6);
+        const defaultShoes = prods.find(p => p.id === 12);
+        const defaultBag = prods.find(p => p.id === 16);
 
         setSelectedOutfit({
           top: defaultTop || null,
@@ -124,7 +123,6 @@ export default function StudioPage() {
       if (data.success) {
         setSimilarStyles(data.similar_styles || []);
         setComplementaryPieces(data.complementary_pieces || { bottoms: [], shoes: [], bags: [], accessories: [] });
-        setCuratedOutfits(data.curated_outfits || []);
       }
     } catch (err) {
       console.error("Error loading CV styling:", err);
@@ -155,7 +153,6 @@ export default function StudioPage() {
       setSelectedOutfit(prev => ({
         ...prev,
         dress: item
-        // top and bottom hidden automatically in OutfitPreview
       }));
       triggerCVSimilarity(item.id);
       showToast(`Selected dress: ${item.name}`);
@@ -183,59 +180,19 @@ export default function StudioPage() {
     showToast(`Removed ${slot} from mannequin`);
   };
 
-  // Reset entire outfit to default separates (Part 6)
-  const handleResetOutfit = () => {
-    const defaultTop = catalogProducts.find(p => p.id === 1);
-    const defaultBottom = catalogProducts.find(p => p.id === 10);
-    const defaultShoes = catalogProducts.find(p => p.id === 29);
-    const defaultBag = catalogProducts.find(p => p.id === 24);
+  // Apply a verified Curated Preset (1..7)
+  const applyPreset = (presetId) => {
+    const preset = PREDEFINED_OUTFITS.find(p => p.id === presetId);
+    if (!preset) return;
 
-    setSelectedOutfit({
-      top: defaultTop || null,
-      bottom: defaultBottom || null,
-      dress: null,
-      shoes: defaultShoes || null,
-      bag: defaultBag || null
-    });
-    setActiveLookIndex(0);
-    if (defaultTop) triggerCVSimilarity(defaultTop.id);
-    showToast(`Outfit reset to default ensemble.`);
-  };
+    const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === presetId);
+    if (idx !== -1) setActiveLookIndex(idx);
 
-  // Curated 5 Ensembles (Outfit 1/5 .. 5/5)
-  const curatedEnsembles = [
-    {
-      name: "Look 1: Blush Floral & Wide Denim",
-      topId: 1, bottomId: 10, shoesId: 29, bagId: 24, dressId: null
-    },
-    {
-      name: "Look 2: Cream Botanical & Ecru Trousers",
-      topId: 2, bottomId: 11, shoesId: 30, bagId: 23, dressId: null
-    },
-    {
-      name: "Look 3: Dusty Rose & Sunray Pleated Skirt",
-      topId: 3, bottomId: 13, shoesId: 31, bagId: 25, dressId: null
-    },
-    {
-      name: "Look 4: Crimson Peasant & Charcoal Pants",
-      topId: 4, bottomId: 16, shoesId: 32, bagId: 27, dressId: null
-    },
-    {
-      name: "Look 5: Sage Linen & Camel Fluid Trousers",
-      topId: 8, bottomId: 14, shoesId: 33, bagId: 26, dressId: null
-    }
-  ];
-
-  const applyCuratedLook = (index) => {
-    const look = curatedEnsembles[index];
-    if (!look) return;
-    setActiveLookIndex(index);
-
-    const newTop = catalogProducts.find(p => p.id === look.topId);
-    const newBottom = catalogProducts.find(p => p.id === look.bottomId);
-    const newShoes = catalogProducts.find(p => p.id === look.shoesId);
-    const newBag = catalogProducts.find(p => p.id === look.bagId);
-    const newDress = look.dressId ? catalogProducts.find(p => p.id === look.dressId) : null;
+    const newTop = catalogProducts.find(p => p.id === preset.topId);
+    const newBottom = catalogProducts.find(p => p.id === preset.bottomId);
+    const newShoes = catalogProducts.find(p => p.id === preset.shoesId);
+    const newBag = catalogProducts.find(p => p.id === preset.bagId);
+    const newDress = preset.dressId ? catalogProducts.find(p => p.id === preset.dressId) : null;
 
     setSelectedOutfit({
       top: newTop || null,
@@ -245,18 +202,25 @@ export default function StudioPage() {
       bag: newBag || null
     });
 
-    if (newTop) triggerCVSimilarity(newTop.id);
-    showToast(`Switched to Curated ${look.name}`);
+    const triggerId = newDress ? newDress.id : (newTop ? newTop.id : null);
+    if (triggerId) triggerCVSimilarity(triggerId);
+    showToast(`Equipped ${preset.name}`);
   };
 
   const handlePrevLook = () => {
-    const nextIdx = (activeLookIndex - 1 + curatedEnsembles.length) % curatedEnsembles.length;
-    applyCuratedLook(nextIdx);
+    const nextIdx = (activeLookIndex - 1 + PREDEFINED_OUTFITS.length) % PREDEFINED_OUTFITS.length;
+    applyPreset(PREDEFINED_OUTFITS[nextIdx].id);
   };
 
   const handleNextLook = () => {
-    const nextIdx = (activeLookIndex + 1) % curatedEnsembles.length;
-    applyCuratedLook(nextIdx);
+    const nextIdx = (activeLookIndex + 1) % PREDEFINED_OUTFITS.length;
+    applyPreset(PREDEFINED_OUTFITS[nextIdx].id);
+  };
+
+  // Reset entire outfit to default separates (Part 6)
+  const handleResetOutfit = () => {
+    applyPreset(1);
+    showToast(`Outfit reset to default ensemble.`);
   };
 
   // Filter left catalog products based on active category
@@ -290,7 +254,7 @@ export default function StudioPage() {
     const activeMain = selectedOutfit.dress || selectedOutfit.top;
     const newOutfit = {
       id: Date.now(),
-      name: `${activeMain?.name || 'Custom'} Ensemble`,
+      name: `${activeMain?.name || 'Curated'} Ensemble`,
       top: selectedOutfit.top,
       bottom: selectedOutfit.bottom,
       dress: selectedOutfit.dress,
@@ -407,7 +371,7 @@ export default function StudioPage() {
                   Choose Your Style
                 </h2>
                 <p className="text-[11.5px] text-[#A8ADB8] mt-0.5">
-                  Pick an item from our curated collection
+                  Pick an item from our curated minimal wardrobe
                 </p>
               </div>
             </div>
@@ -445,7 +409,7 @@ export default function StudioPage() {
                   <div key={idx} className="aspect-square rounded-2xl bg-white/5 animate-pulse border border-white/5" />
                 ))
               ) : (
-                filteredCatalog.slice(0, 9).map((product) => {
+                filteredCatalog.map((product) => {
                   const isSelected = isProductSelected(product);
                   const isFav = wishlist.some(w => w.id === product.id);
 
@@ -458,7 +422,7 @@ export default function StudioPage() {
                           ? 'bg-white/15 border-2 border-[#A78BFA] shadow-[0_0_18px_rgba(167,139,250,0.45)] scale-[1.02]' 
                           : 'bg-white/5 hover:bg-white/10 border border-white/10 hover:shadow-lg'
                       }`}
-                      title={`${product.name} — ${product.price || '₹1,299'}`}
+                      title={`${product.name} — ${product.price}`}
                     >
                       <img 
                         src={`/catalog/${product.image}`}
@@ -489,35 +453,33 @@ export default function StudioPage() {
               )}
             </div>
 
-            {/* Bottom "View All" Button */}
+            {/* Bottom Info Pill */}
             <div className="mt-4 pt-2">
-              <button
-                onClick={() => showToast(`Showing all available ${activeCategory} in studio catalog.`)}
-                className="w-full py-2.5 rounded-full text-xs font-semibold text-[#A78BFA] bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <span>View All {categories.find(c => c.id === activeCategory)?.label}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              <div className="w-full py-2 px-3 rounded-full text-[10.5px] text-[#A8ADB8] bg-white/5 border border-white/10 flex items-center justify-center gap-1.5 text-center">
+                <span>Minimalist Curated Collection (17 items)</span>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ========================================================= */}
-        {/* CENTER COLUMN: Interactive Virtual Mannequin Display (Span 5) */}
+        {/* CENTER COLUMN: Realistic Virtual Mannequin Display (Span 5) */}
         {/* ========================================================= */}
         <section className="lg:col-span-5 flex flex-col items-center">
           <div className="w-full relative flex flex-col items-center">
             
-            {/* Dedicated Layered OutfitPreview Component (Part 3 & 4) */}
+            {/* Dedicated Realistic OutfitPreview Component (Part 1, 4 & 5) */}
             <OutfitPreview
               selectedOutfit={selectedOutfit}
               onRemoveItem={handleRemoveItem}
-              onSelectCategory={(cat) => setActiveCategory(cat)}
+              onApplyPreset={applyPreset}
+              catalogProducts={catalogProducts}
             />
 
-            {/* Below Mannequin: Outfit Controls (Part 6) */}
+            {/* Below Mannequin: Curated Look Switcher & Outfit Controls */}
             <div className="mt-4 flex flex-col items-center gap-3 w-full max-w-[440px]">
-              {/* Outfit Indicator Capsule with Next/Prev Controls */}
+              
+              {/* Curated Looks Selector Strip */}
               <div className="flex items-center justify-between w-full px-4 py-2 rounded-2xl bg-white/5 border border-white/10">
                 <button 
                   onClick={handlePrevLook}
@@ -529,10 +491,10 @@ export default function StudioPage() {
 
                 <div className="text-center">
                   <span className="text-xs font-bold text-[#A78BFA] tracking-wide">
-                    Outfit {activeLookIndex + 1}/5
+                    Curated Look {activeLookIndex + 1}/7
                   </span>
                   <p className="text-[10px] text-[#A8ADB8]">
-                    {curatedEnsembles[activeLookIndex]?.name}
+                    {PREDEFINED_OUTFITS[activeLookIndex]?.name}
                   </p>
                 </div>
 
@@ -587,17 +549,10 @@ export default function StudioPage() {
                     Similar Styles
                   </h3>
                   <p className="text-[11px] text-[#A8ADB8] mt-0.5">
-                    Explore visually similar {selectedOutfit.top?.category || 'tops'} using Computer Vision
+                    Explore visually similar {selectedOutfit.top?.category || selectedOutfit.dress?.category || 'tops'} using Computer Vision
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => showToast("Displaying all ranked similarity matches.")}
-                className="text-[11px] font-semibold text-[#A78BFA] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
-              >
-                <span>View All</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
             </div>
 
             {/* Horizontal Product Cards Row */}
@@ -638,7 +593,7 @@ export default function StudioPage() {
                         {sim.name}
                       </h4>
                       <p className="text-[9.5px] font-medium text-[#A8ADB8] mt-0.5">
-                        {sim.price || '₹1,299'}
+                        {sim.price}
                       </p>
                     </div>
 
@@ -672,22 +627,14 @@ export default function StudioPage() {
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => showToast("Displaying all complementary harmonized pieces.")}
-                className="text-[11px] font-semibold text-[#A78BFA] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
-              >
-                <span>View All</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
             </div>
 
-            {/* Category Sub-tabs: Bottoms, Shoes, Bags, Accessories */}
+            {/* Category Sub-tabs: Bottoms, Shoes, Bags */}
             <div className="flex items-center gap-1.5 mb-3 bg-white/5 p-1 rounded-full border border-white/10">
               {[
                 { id: 'bottoms', label: 'Bottoms' },
                 { id: 'shoes', label: 'Shoes' },
                 { id: 'bags', label: 'Bags' },
-                { id: 'accessories', label: 'Accessories' },
               ].map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -743,7 +690,7 @@ export default function StudioPage() {
                         {item.name}
                       </h4>
                       <p className="text-[9px] font-medium text-[#A8ADB8] mt-0.5">
-                        {item.price || '₹1,599'}
+                        {item.price}
                       </p>
                     </div>
                   </div>
