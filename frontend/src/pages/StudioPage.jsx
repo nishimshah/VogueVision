@@ -4,7 +4,8 @@ import {
   ExternalLink, Info, Check
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import OutfitPreview, { PREDEFINED_OUTFITS } from '../components/OutfitPreview';
+import OutfitPreview from '../components/OutfitPreview';
+import { PREDEFINED_OUTFITS } from '../data/outfits';
 import HowItWorksModal from '../components/HowItWorksModal';
 import AboutModal from '../components/AboutModal';
 import SavedOutfitsModal from '../components/SavedOutfitsModal';
@@ -133,53 +134,97 @@ export default function StudioPage() {
 
     if (cat === 'tops') {
       setLastSelectedCategory('tops');
-      setSelectedOutfit(prev => {
-        const nextOutfit = {
+
+      // 1. Find all verified outfits containing this top's product ID
+      const verifiedOutfits = PREDEFINED_OUTFITS.filter(p => p.topId === item.id);
+
+      // 2. Check if the currently equipped bottom already forms a verified outfit with this top
+      let targetPreset = verifiedOutfits.find(p => p.bottomId === selectedOutfit.bottom?.id);
+
+      // 3. If not, automatically select the matching verified bottom:
+      if (!targetPreset && verifiedOutfits.length > 0) {
+        // Special case for Black Fitted Top (ID 2):
+        // Prioritize Look 11 (Cream Mini Skirt ID 22 + Boots)
+        if (item.id === 2) {
+          targetPreset = verifiedOutfits.find(p => p.id === 11) || verifiedOutfits[0];
+        } else if (activeOccasion !== 'All') {
+          targetPreset = verifiedOutfits.find(p => p.occasion === activeOccasion) || verifiedOutfits[0];
+        } else {
+          targetPreset = verifiedOutfits[0];
+        }
+      }
+
+      if (targetPreset) {
+        const companionBottom = catalogProducts.find(p => p.id === targetPreset.bottomId);
+        const companionShoes = targetPreset.shoesId ? catalogProducts.find(p => p.id === targetPreset.shoesId) : selectedOutfit.shoes;
+        const companionBag = targetPreset.bagId ? catalogProducts.find(p => p.id === targetPreset.bagId) : selectedOutfit.bag;
+
+        setSelectedOutfit({
+          top: item,
+          bottom: companionBottom || null,
+          dress: null,
+          shoes: companionShoes || null,
+          bag: companionBag || null
+        });
+
+        const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === targetPreset.id);
+        if (idx !== -1) setActiveLookIndex(idx);
+      } else {
+        // No verified outfit exists for this top: keep selected bottom, display honest unsupported state
+        setSelectedOutfit(prev => ({
           ...prev,
           top: item,
-          dress: null // Clear dress when choosing separates
-        };
-        // Check if item + prev.bottom forms a verified preset
-        const matched = PREDEFINED_OUTFITS.find(p => p.topId === item.id && p.bottomId === prev.bottom?.id);
-        if (matched) {
-          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
-          if (idx !== -1) setActiveLookIndex(idx);
-        }
-        return nextOutfit;
-      });
+          dress: null
+        }));
+      }
+
       triggerCVSimilarity(item.id);
       showToast(`Selected top: ${item.name}`);
     } else if (cat === 'jeans' || cat === 'trousers' || cat === 'skirts') {
       setLastSelectedCategory('bottoms');
-      setSelectedOutfit(prev => {
-        const nextOutfit = {
-          ...prev,
-          bottom: item,
-          dress: null // Clear dress when choosing separates
-        };
-        // Check if prev.top + item forms a verified preset
-        const matched = PREDEFINED_OUTFITS.find(p => p.topId === prev.top?.id && p.bottomId === item.id);
-        if (matched) {
-          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
-          if (idx !== -1) setActiveLookIndex(idx);
-        }
-        return nextOutfit;
-      });
+
+      const currentTop = selectedOutfit.top;
+      // Check whether this new bottom forms a verified preset with the currently selected top
+      const matched = PREDEFINED_OUTFITS.find(p => p.topId === currentTop?.id && p.bottomId === item.id);
+
+      let nextShoes = selectedOutfit.shoes;
+      let nextBag = selectedOutfit.bag;
+      if (matched) {
+        const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
+        if (idx !== -1) setActiveLookIndex(idx);
+        if (matched.shoesId) nextShoes = catalogProducts.find(p => p.id === matched.shoesId) || nextShoes;
+        if (matched.bagId) nextBag = catalogProducts.find(p => p.id === matched.bagId) || nextBag;
+      }
+
+      // Preserve the user's selected top and deliberately selected bottom
+      setSelectedOutfit(prev => ({
+        ...prev,
+        bottom: item,
+        dress: null,
+        shoes: nextShoes,
+        bag: nextBag
+      }));
+
       triggerCVSimilarity(item.id);
       showToast(`Selected bottom: ${item.name}`);
     } else if (cat === 'dresses') {
       setLastSelectedCategory('dresses');
       const matched = PREDEFINED_OUTFITS.find(p => p.dressId === item.id);
+      let nextShoes = selectedOutfit.shoes;
+      let nextBag = selectedOutfit.bag;
       if (matched) {
         const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
         if (idx !== -1) setActiveLookIndex(idx);
+        if (matched.shoesId) nextShoes = catalogProducts.find(p => p.id === matched.shoesId) || nextShoes;
+        if (matched.bagId) nextBag = catalogProducts.find(p => p.id === matched.bagId) || nextBag;
       }
-      setSelectedOutfit(prev => ({
-        ...prev,
+      setSelectedOutfit({
+        top: null,
+        bottom: null,
         dress: item,
-        top: null, // Clear separates when choosing a dress
-        bottom: null
-      }));
+        shoes: nextShoes,
+        bag: nextBag
+      });
       triggerCVSimilarity(item.id);
       showToast(`Selected dress: ${item.name}`);
     }
@@ -213,12 +258,20 @@ export default function StudioPage() {
   };
 
   const handlePrevLook = () => {
-    const nextIdx = (activeLookIndex - 1 + PREDEFINED_OUTFITS.length) % PREDEFINED_OUTFITS.length;
+    const currentMatched = PREDEFINED_OUTFITS.find(p => p.matches(selectedOutfit));
+    const baseIdx = currentMatched 
+      ? PREDEFINED_OUTFITS.findIndex(p => p.id === currentMatched.id) 
+      : activeLookIndex;
+    const nextIdx = (baseIdx - 1 + PREDEFINED_OUTFITS.length) % PREDEFINED_OUTFITS.length;
     applyPreset(PREDEFINED_OUTFITS[nextIdx].id);
   };
 
   const handleNextLook = () => {
-    const nextIdx = (activeLookIndex + 1) % PREDEFINED_OUTFITS.length;
+    const currentMatched = PREDEFINED_OUTFITS.find(p => p.matches(selectedOutfit));
+    const baseIdx = currentMatched 
+      ? PREDEFINED_OUTFITS.findIndex(p => p.id === currentMatched.id) 
+      : activeLookIndex;
+    const nextIdx = (baseIdx + 1) % PREDEFINED_OUTFITS.length;
     applyPreset(PREDEFINED_OUTFITS[nextIdx].id);
   };
 

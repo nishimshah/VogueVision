@@ -5,107 +5,7 @@ import {
 } from 'lucide-react';
 
 import neutralBaseImg from '../assets/mannequin/neutral_base.jpg';
-import outfit1Img from '../assets/mannequin/outfit_1.jpg';
-import outfit2Img from '../assets/mannequin/outfit_2.jpg';
-import outfit3Img from '../assets/mannequin/outfit_3.jpg';
-import outfit4Img from '../assets/mannequin/outfit_4.jpg';
-import outfit5Img from '../assets/mannequin/outfit_5.jpg';
-import outfit6Img from '../assets/mannequin/outfit_6.jpg';
-import outfit7Img from '../assets/mannequin/outfit_7.jpg';
-
-export const PREDEFINED_OUTFITS = [
-  {
-    id: 1,
-    name: "Look 1 / 7 — White Tee + Blue Jeans",
-    shortName: "White Tee + Blue Jeans",
-    occasion: "Casual",
-    image: outfit1Img,
-    topId: 1,
-    bottomId: 6,
-    shoesId: 12,
-    bagId: 16,
-    dressId: null,
-    matches: (o) => o.top?.id === 1 && o.bottom?.id === 6
-  },
-  {
-    id: 2,
-    name: "Look 2 / 7 — Black Top + Beige Trousers",
-    shortName: "Black Top + Beige Trousers",
-    occasion: "Formal",
-    image: outfit2Img,
-    topId: 2,
-    bottomId: 8,
-    shoesId: 13,
-    bagId: 15,
-    dressId: null,
-    matches: (o) => o.top?.id === 2 && o.bottom?.id === 8
-  },
-  {
-    id: 3,
-    name: "Look 3 / 7 — Beige Blouse + Black Trousers",
-    shortName: "Beige Blouse + Black Trousers",
-    occasion: "Formal",
-    image: outfit3Img,
-    topId: 3,
-    bottomId: 7,
-    shoesId: 14,
-    bagId: 17,
-    dressId: null,
-    matches: (o) => o.top?.id === 3 && o.bottom?.id === 7
-  },
-  {
-    id: 4,
-    name: "Look 4 / 7 — White Shirt + Blue Jeans",
-    shortName: "White Shirt + Blue Jeans",
-    occasion: "Casual",
-    image: outfit4Img,
-    topId: 4,
-    bottomId: 6,
-    shoesId: 12,
-    bagId: 15,
-    dressId: null,
-    matches: (o) => o.top?.id === 4 && o.bottom?.id === 6
-  },
-  {
-    id: 5,
-    name: "Look 5 / 7 — Grey Tank + Cream Skirt",
-    shortName: "Grey Tank + Cream Skirt",
-    occasion: "Casual",
-    image: outfit5Img,
-    topId: 5,
-    bottomId: 9,
-    shoesId: 14,
-    bagId: 17,
-    dressId: null,
-    matches: (o) => o.top?.id === 5 && o.bottom?.id === 9
-  },
-  {
-    id: 6,
-    name: "Look 6 / 7 — Black Cocktail Dress",
-    shortName: "Black Cocktail Dress",
-    occasion: "Party",
-    image: outfit6Img,
-    topId: null,
-    bottomId: null,
-    shoesId: 14,
-    bagId: 15,
-    dressId: 10,
-    matches: (o) => o.dress?.id === 10
-  },
-  {
-    id: 7,
-    name: "Look 7 / 7 — Beige Sleeveless Midi Dress",
-    shortName: "Beige Sleeveless Dress",
-    occasion: "Casual",
-    image: outfit7Img,
-    topId: null,
-    bottomId: null,
-    shoesId: 13,
-    bagId: 16,
-    dressId: 11,
-    matches: (o) => o.dress?.id === 11
-  }
-];
+import { PREDEFINED_OUTFITS } from '../data/outfits';
 
 export default function OutfitPreview({ 
   selectedOutfit, 
@@ -132,7 +32,7 @@ export default function OutfitPreview({
     return false;
   }) || PREDEFINED_OUTFITS[0];
 
-  const currentLook = PREDEFINED_OUTFITS[activeLookIndex] || PREDEFINED_OUTFITS[0];
+  const currentLook = isDirectMatch ? matchedPreset : (PREDEFINED_OUTFITS[activeLookIndex] || PREDEFINED_OUTFITS[0]);
 
   // Dynamic look title
   const displayedLookTitle = isDirectMatch 
@@ -226,6 +126,7 @@ export default function OutfitPreview({
         {/* Navigation Arrows & Current Look Name */}
         <div className="flex items-center gap-2 min-w-0">
           <button
+            id="prev-look-btn"
             onClick={onPrevLook}
             className="w-6 h-6 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] flex items-center justify-center text-[#F5F1F8] hover:text-[#B49AF4] transition-all cursor-pointer flex-shrink-0"
             title="Previous Look"
@@ -238,6 +139,7 @@ export default function OutfitPreview({
           </span>
 
           <button
+            id="next-look-btn"
             onClick={onNextLook}
             className="w-6 h-6 rounded-lg bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.12] flex items-center justify-center text-[#F5F1F8] hover:text-[#B49AF4] transition-all cursor-pointer flex-shrink-0"
             title="Next Look"

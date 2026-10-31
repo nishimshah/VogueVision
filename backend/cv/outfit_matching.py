@@ -36,16 +36,22 @@ def load_catalog():
 
 VERIFIED_STUDIO_PAIRS = {
     1: {"bottoms": [6], "shoes": [12], "accessories": [16]},  # White Fitted T-Shirt -> Blue Jeans
-    2: {"bottoms": [8], "shoes": [13], "accessories": [15]},  # Black Fitted Top -> Beige Trousers
+    2: {"bottoms": [22, 8], "shoes": [27, 13], "accessories": [15]},  # Black Fitted Top -> Cream Mini Skirt (Boots), Beige Trousers
     3: {"bottoms": [7], "shoes": [14], "accessories": [17]},  # Beige Silky Blouse -> Black Trousers
     4: {"bottoms": [6], "shoes": [12], "accessories": [15]},  # White Button-Down Shirt -> Blue Jeans
     5: {"bottoms": [9], "shoes": [14], "accessories": [17]},  # Grey Tank Top -> Cream Skirt
     6: {"tops": [4, 1], "shoes": [12], "accessories": [15, 16]},  # Blue Jeans -> White Shirt, White Tee
-    7: {"tops": [3], "shoes": [14], "accessories": [17]},  # Black Trousers -> Beige Blouse
+    7: {"tops": [20, 3], "shoes": [14, 13], "accessories": [15, 17]},  # Black Trousers -> Burgundy Top, Beige Blouse
     8: {"tops": [2], "shoes": [13], "accessories": [15]},  # Beige Trousers -> Black Top
     9: {"tops": [5], "shoes": [14], "accessories": [17]},  # Cream Skirt -> Grey Tank
     10: {"shoes": [14], "accessories": [15]},  # Black Cocktail Dress
     11: {"shoes": [13], "accessories": [16]},  # Beige Sleeveless Dress
+    18: {"bottoms": [19], "shoes": [14], "accessories": [15]},  # Black Satin Corset Top -> Black Satin Maxi Skirt
+    19: {"tops": [18, 21], "shoes": [14], "accessories": [15, 17]},  # Black Satin Maxi Skirt -> Black Corset, Champagne Cami
+    20: {"bottoms": [7], "shoes": [14], "accessories": [15]},  # Burgundy Off-Shoulder Top -> Black Trousers
+    21: {"bottoms": [19], "shoes": [14], "accessories": [17]},  # Champagne Satin Camisole -> Black Satin Maxi Skirt
+    22: {"tops": [2], "shoes": [27], "accessories": [15]},  # Cream Mini Skirt -> Black Fitted Top (+ Knee-High Boots)
+    27: {"bottoms": [22], "tops": [2]}  # Black Knee-High Boots -> Cream Mini Skirt, Black Fitted Top
 }
 
 def get_complementary_items(category: str, primary_color: str, main_item_id: int = None):
