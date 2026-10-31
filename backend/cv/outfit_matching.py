@@ -34,21 +34,43 @@ def load_catalog():
     with open(PRODUCTS_JSON, "r") as f:
         return json.load(f)
 
-def get_complementary_items(category: str, primary_color: str):
+VERIFIED_STUDIO_PAIRS = {
+    1: {"bottoms": [6], "shoes": [12], "accessories": [16]},  # White Fitted T-Shirt -> Blue Jeans
+    2: {"bottoms": [8], "shoes": [13], "accessories": [15]},  # Black Fitted Top -> Beige Trousers
+    3: {"bottoms": [7], "shoes": [14], "accessories": [17]},  # Beige Silky Blouse -> Black Trousers
+    4: {"bottoms": [6], "shoes": [12], "accessories": [15]},  # White Button-Down Shirt -> Blue Jeans
+    5: {"bottoms": [9], "shoes": [14], "accessories": [17]},  # Grey Tank Top -> Cream Skirt
+    6: {"tops": [4, 1], "shoes": [12], "accessories": [15, 16]},  # Blue Jeans -> White Shirt, White Tee
+    7: {"tops": [3], "shoes": [14], "accessories": [17]},  # Black Trousers -> Beige Blouse
+    8: {"tops": [2], "shoes": [13], "accessories": [15]},  # Beige Trousers -> Black Top
+    9: {"tops": [5], "shoes": [14], "accessories": [17]},  # Cream Skirt -> Grey Tank
+    10: {"shoes": [14], "accessories": [15]},  # Black Cocktail Dress
+    11: {"shoes": [13], "accessories": [16]},  # Beige Sleeveless Dress
+}
+
+def get_complementary_items(category: str, primary_color: str, main_item_id: int = None):
     """
     Finds matching catalog items grouped by Bottoms, Shoes, and Accessories.
+    Prioritizes verified studio showroom companion items when main_item_id is provided.
     """
     catalog = load_catalog()
     compatible_colors = COLOR_HARMONY_RULES.get(primary_color.lower(), ["cream", "white", "blue", "beige"])
 
-    def score_color_match(item):
+    verified_targets = VERIFIED_STUDIO_PAIRS.get(main_item_id, {}) if main_item_id else {}
+
+    def score_match(item, pool_key):
+        score = 0
+        if item["id"] in verified_targets.get(pool_key, []):
+            score += 100  # Highest priority for verified studio photography pairings
+
         item_colors = item.get("color_family", [item.get("primary_color", "")])
         for c in item_colors:
             if c in compatible_colors:
-                return 2
+                score += 2
+                break
         if item.get("primary_color", "") in ["white", "cream", "black"]:
-            return 1
-        return 0
+            score += 1
+        return score
 
     # Categorize catalog
     bottoms_pool = [i for i in catalog if i.get("category") in ["jeans", "trousers", "skirts"]]
@@ -56,13 +78,14 @@ def get_complementary_items(category: str, primary_color: str):
     accessories_pool = [i for i in catalog if i.get("category") == "handbags"]
     tops_pool = [i for i in catalog if i.get("category") == "tops"]
 
-    # Rank each pool by color harmony
-    bottoms_ranked = sorted(bottoms_pool, key=score_color_match, reverse=True)
-    shoes_ranked = sorted(shoes_pool, key=score_color_match, reverse=True)
-    accessories_ranked = sorted(accessories_pool, key=score_color_match, reverse=True)
-    tops_ranked = sorted(tops_pool, key=score_color_match, reverse=True)
+    # Rank each pool by verified pairing and color harmony
+    bottoms_ranked = sorted(bottoms_pool, key=lambda x: score_match(x, "bottoms"), reverse=True)
+    shoes_ranked = sorted(shoes_pool, key=lambda x: score_match(x, "shoes"), reverse=True)
+    accessories_ranked = sorted(accessories_pool, key=lambda x: score_match(x, "accessories"), reverse=True)
+    tops_ranked = sorted(tops_pool, key=lambda x: score_match(x, "tops"), reverse=True)
 
-    def clean_item(item):
+    def clean_item(item, pool_key):
+        is_companion = item["id"] in verified_targets.get(pool_key, [])
         return {
             "id": item["id"],
             "name": item["name"],
@@ -72,14 +95,16 @@ def get_complementary_items(category: str, primary_color: str):
             "price": item.get("price", ""),
             "image": item["image"],
             "imageUrl": f"/catalog/{item['image']}",
-            "dominant_colors": item.get("dominant_colors", [])
+            "dominant_colors": item.get("dominant_colors", []),
+            "has_studio_look": item.get("has_studio_look", False),
+            "is_verified_companion": is_companion
         }
 
     return {
-        "bottoms": [clean_item(x) for x in bottoms_ranked[:4]],
-        "shoes": [clean_item(x) for x in shoes_ranked[:4]],
-        "accessories": [clean_item(x) for x in accessories_ranked[:4]],
-        "tops": [clean_item(x) for x in tops_ranked[:4]]
+        "bottoms": [clean_item(x, "bottoms") for x in bottoms_ranked[:4]],
+        "shoes": [clean_item(x, "shoes") for x in shoes_ranked[:4]],
+        "accessories": [clean_item(x, "accessories") for x in accessories_ranked[:4]],
+        "tops": [clean_item(x, "tops") for x in tops_ranked[:4]]
     }
 
 def generate_curated_outfits(main_item: dict, primary_color: str):

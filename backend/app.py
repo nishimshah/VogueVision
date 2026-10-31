@@ -232,8 +232,8 @@ def get_product_styling(product_id):
         exclude_id=product_id
     )
 
-    # 2. Rule-based color harmony complementary pieces
-    complementary_pieces = get_complementary_items(category, primary_color)
+    # 2. Rule-based color harmony complementary pieces (prioritizing verified studio showroom companions)
+    complementary_pieces = get_complementary_items(category, primary_color, main_item_id=product_id)
 
     # 3. 5 Curated complete stylized looks
     item_meta = dict(product)

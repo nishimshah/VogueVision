@@ -133,24 +133,47 @@ export default function StudioPage() {
 
     if (cat === 'tops') {
       setLastSelectedCategory('tops');
-      setSelectedOutfit(prev => ({
-        ...prev,
-        top: item,
-        dress: null // Clear dress when choosing separates
-      }));
+      setSelectedOutfit(prev => {
+        const nextOutfit = {
+          ...prev,
+          top: item,
+          dress: null // Clear dress when choosing separates
+        };
+        // Check if item + prev.bottom forms a verified preset
+        const matched = PREDEFINED_OUTFITS.find(p => p.topId === item.id && p.bottomId === prev.bottom?.id);
+        if (matched) {
+          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
+          if (idx !== -1) setActiveLookIndex(idx);
+        }
+        return nextOutfit;
+      });
       triggerCVSimilarity(item.id);
       showToast(`Selected top: ${item.name}`);
     } else if (cat === 'jeans' || cat === 'trousers' || cat === 'skirts') {
       setLastSelectedCategory('bottoms');
-      setSelectedOutfit(prev => ({
-        ...prev,
-        bottom: item,
-        dress: null // Clear dress when choosing separates
-      }));
+      setSelectedOutfit(prev => {
+        const nextOutfit = {
+          ...prev,
+          bottom: item,
+          dress: null // Clear dress when choosing separates
+        };
+        // Check if prev.top + item forms a verified preset
+        const matched = PREDEFINED_OUTFITS.find(p => p.topId === prev.top?.id && p.bottomId === item.id);
+        if (matched) {
+          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
+          if (idx !== -1) setActiveLookIndex(idx);
+        }
+        return nextOutfit;
+      });
       triggerCVSimilarity(item.id);
       showToast(`Selected bottom: ${item.name}`);
     } else if (cat === 'dresses') {
       setLastSelectedCategory('dresses');
+      const matched = PREDEFINED_OUTFITS.find(p => p.dressId === item.id);
+      if (matched) {
+        const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
+        if (idx !== -1) setActiveLookIndex(idx);
+      }
       setSelectedOutfit(prev => ({
         ...prev,
         dress: item,
@@ -462,6 +485,13 @@ export default function StudioPage() {
                             loading="lazy"
                           />
 
+                          {/* Studio Look Available Badge */}
+                          {product.has_studio_look && (
+                            <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-[#191723]/80 backdrop-blur-md border border-[#B49AF4]/40 text-[7.5px] font-bold text-[#B49AF4] flex items-center gap-0.5 pointer-events-none">
+                              <Check className="w-2 h-2 text-[#B49AF4]" /> Studio
+                            </span>
+                          )}
+
                           {/* Heart Wishlist Icon */}
                           <button
                             onClick={(e) => toggleWishlist(product, e)}
@@ -629,6 +659,11 @@ export default function StudioPage() {
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
+                      {item.is_verified_companion && (
+                        <span className="absolute top-0.5 left-0.5 px-1 py-0.5 rounded bg-[#B49AF4] text-[#191723] text-[6.5px] font-extrabold shadow-xs pointer-events-none tracking-tight">
+                          ★ Studio Look
+                        </span>
+                      )}
                       <button
                         onClick={(e) => toggleWishlist(item, e)}
                         className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all ${
@@ -649,8 +684,8 @@ export default function StudioPage() {
                     </div>
 
                     <div className="mt-0.5 pt-0.5 border-t border-white/[0.08] text-center">
-                      <span className="text-[8px] font-semibold text-[#B49AF4]">
-                        {isEquipped ? 'Equipped' : '+ Pair'}
+                      <span className={`text-[8px] font-semibold ${item.is_verified_companion ? 'text-[#B49AF4] font-bold' : 'text-[#AAA5B5]'}`}>
+                        {isEquipped ? 'Equipped' : (item.is_verified_companion ? '★ Equip Look' : '+ Pair')}
                       </span>
                     </div>
                   </div>

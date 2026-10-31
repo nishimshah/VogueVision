@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-  Eye, Grid, Shirt, Layers, Sparkles, ArrowRight, 
-  ChevronLeft, ChevronRight, Heart, RotateCcw, Check
+  Sparkles, ArrowRight, ChevronLeft, ChevronRight, 
+  Heart, RotateCcw, Check, AlertCircle 
 } from 'lucide-react';
 
+import neutralBaseImg from '../assets/mannequin/neutral_base.jpg';
 import outfit1Img from '../assets/mannequin/outfit_1.jpg';
 import outfit2Img from '../assets/mannequin/outfit_2.jpg';
 import outfit3Img from '../assets/mannequin/outfit_3.jpg';
@@ -80,7 +81,7 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 6,
-    name: "Look 6 / 7 — Black Tailored Midi Dress",
+    name: "Look 6 / 7 — Black Cocktail Dress",
     shortName: "Black Cocktail Dress",
     occasion: "Party",
     image: outfit6Img,
@@ -115,20 +116,15 @@ export default function OutfitPreview({
   activeLookIndex,
   onApplyPreset
 }) {
-  const [viewMode, setViewMode] = useState('auto'); // 'auto' | 'mannequin' | 'board'
-
   const top = selectedOutfit?.top;
   const bottom = selectedOutfit?.bottom;
   const dress = selectedOutfit?.dress;
 
   // Find exact matching predefined realistic outfit
   const matchedPreset = PREDEFINED_OUTFITS.find(preset => preset.matches(selectedOutfit));
-
-  // Determine effective view: if no exact matched preset and auto mode -> render Outfit Board fallback
   const isDirectMatch = Boolean(matchedPreset);
-  const effectiveView = viewMode === 'auto' ? (isDirectMatch ? 'mannequin' : 'board') : viewMode;
 
-  // Find closest suggestion if current combination is mix & match
+  // Find closest verified studio suggestion if current combination is mix & match
   const suggestedPreset = PREDEFINED_OUTFITS.find(p => {
     if (dress && p.dressId === dress.id) return true;
     if (top && p.topId === top.id) return true;
@@ -143,10 +139,12 @@ export default function OutfitPreview({
     ? matchedPreset.shortName 
     : (dress ? dress.name : `${top?.name || 'Selected Top'} + ${bottom?.name || 'Selected Bottom'}`);
 
+  const activeDisplayImage = isDirectMatch ? matchedPreset.image : neutralBaseImg;
+
   return (
     <div className="w-full h-full flex flex-col justify-between items-center min-h-0 select-none">
       
-      {/* Top Header & View Toggle Bar */}
+      {/* Top Header & Status Indicator */}
       <div className="w-full flex items-center justify-between px-2 mb-1.5 flex-shrink-0">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#B49AF4] animate-pulse" />
@@ -154,149 +152,72 @@ export default function OutfitPreview({
             Virtual Showroom
           </span>
           <span className="text-[10px] text-[#AAA5B5] hidden sm:inline">
-            • {isDirectMatch ? 'Studio Mannequin' : 'Outfit Composition'}
+            • Realistic Studio Mannequin
           </span>
         </div>
 
-        <div className="flex items-center gap-1 p-0.5 rounded-full bg-white/[0.05] border border-white/[0.12]">
-          <button
-            onClick={() => setViewMode('mannequin')}
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
-              effectiveView === 'mannequin'
-                ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/50 text-[#F5F1F8] shadow-xs'
-                : 'text-[#AAA5B5] hover:text-[#F5F1F8]'
-            }`}
-          >
-            Mannequin
-          </button>
-          <button
-            onClick={() => setViewMode('board')}
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
-              effectiveView === 'board'
-                ? 'bg-[#B49AF4]/25 border border-[#B49AF4]/50 text-[#F5F1F8] shadow-xs'
-                : 'text-[#AAA5B5] hover:text-[#F5F1F8]'
-            }`}
-          >
-            Outfit Board
-          </button>
+        <div className="flex items-center gap-1.5">
+          {isDirectMatch ? (
+            <span className="px-2.5 py-0.5 rounded-full bg-[#B49AF4]/15 border border-[#B49AF4]/30 text-[10px] text-[#B49AF4] font-semibold flex items-center gap-1">
+              <Check className="w-3 h-3 text-[#B49AF4]" />
+              Verified Studio Look
+            </span>
+          ) : (
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] text-amber-300 font-semibold flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 text-amber-400" />
+              Unsupported Pairing
+            </span>
+          )}
         </div>
       </div>
 
       {/* CENTER MANNEQUIN DISPLAY CHAMBER */}
       <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden mannequin-chamber border border-white/[0.14] shadow-[0_16px_48px_rgba(0,0,0,0.5)] flex items-center justify-center p-2">
-        
-        {effectiveView === 'mannequin' && matchedPreset ? (
-          /* A. Verified Realistic Predefined Outfit Image */
-          <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-200">
-            <img
-              src={matchedPreset.image}
-              alt={matchedPreset.name}
-              className="w-full h-full object-contain rounded-xl"
-            />
+        <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-200">
+          <img
+            src={activeDisplayImage}
+            alt={isDirectMatch ? matchedPreset.name : "Studio Showroom Mannequin"}
+            className="w-full h-full object-contain rounded-xl"
+          />
 
-            {/* Verified Badge */}
+          {isDirectMatch ? (
+            /* Verified Studio Look Badge */
             <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#191723]/80 backdrop-blur-md border border-[#B49AF4]/40 text-[9.5px] font-bold text-[#B49AF4] shadow-xs pointer-events-none flex items-center gap-1">
               <Check className="w-3 h-3 text-[#B49AF4]" />
               Verified Studio Look
             </div>
-          </div>
-        ) : (
-          /* B. Polished Fallback: Curated Outfit Composition Board */
-          <div className="relative w-full h-full flex flex-col justify-between p-4 animate-in fade-in duration-200 overflow-y-auto">
-            {/* Top Composition Badge */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="px-2.5 py-1 rounded-full bg-[#B49AF4]/15 border border-[#B49AF4]/30 text-[9.5px] font-semibold text-[#B49AF4]">
-                Outfit Composition Preview • Mix & Match
-              </div>
-              <span className="text-[10px] text-[#AAA5B5]">
-                {dress ? '1/1 Piece' : '2/2 Separates'}
-              </span>
-            </div>
-
-            {/* Visual Item Layout */}
-            {dress ? (
-              /* Single Dress View */
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="w-48 h-64 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
-                  <img
-                    src={`/catalog/${dress.image}`}
-                    alt={dress.name}
-                    className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-                  />
+          ) : (
+            /* Compact Floating Glass Notice for Unsupported Combinations */
+            <div className="absolute bottom-3 inset-x-3 p-3 rounded-xl bg-[#191723]/92 backdrop-blur-md border border-white/[0.16] shadow-2xl flex flex-col gap-1.5 animate-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-300 text-[11px] font-semibold">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
+                  <span>Unsupported Preview Combination</span>
                 </div>
-                <div className="mt-2 text-center">
-                  <span className="text-xs font-semibold text-[#F5F1F8]">{dress.name}</span>
-                  <span className="text-[11px] text-[#B49AF4] block font-mono">{dress.price}</span>
-                </div>
-              </div>
-            ) : (
-              /* Top + Bottom Separates Grid */
-              <div className="flex-1 flex items-center justify-center gap-4">
-                {/* Top Garment */}
-                <div className="flex flex-col items-center">
-                  <div className="w-36 h-48 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
-                    {top ? (
-                      <img
-                        src={`/catalog/${top.image}`}
-                        alt={top.name}
-                        className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-[#AAA5B5]">
-                        <Shirt className="w-6 h-6 mb-1 text-[#AAA5B5]" />
-                        <span className="text-[10px]">Select Top</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1.5 text-center max-w-[140px]">
-                    <span className="text-[11px] font-semibold text-[#F5F1F8] line-clamp-1">{top?.name || 'Top'}</span>
-                    <span className="text-[10px] text-[#B49AF4] font-mono">{top?.price}</span>
-                  </div>
-                </div>
-
-                <div className="text-xl font-light text-[#B49AF4]/40">+</div>
-
-                {/* Bottom Garment */}
-                <div className="flex flex-col items-center">
-                  <div className="w-36 h-48 rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.14] p-2 shadow-lg group">
-                    {bottom ? (
-                      <img
-                        src={`/catalog/${bottom.image}`}
-                        alt={bottom.name}
-                        className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-[#AAA5B5]">
-                        <Layers className="w-6 h-6 mb-1 text-[#AAA5B5]" />
-                        <span className="text-[10px]">Select Bottom</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1.5 text-center max-w-[140px]">
-                    <span className="text-[11px] font-semibold text-[#F5F1F8] line-clamp-1">{bottom?.name || 'Bottom'}</span>
-                    <span className="text-[10px] text-[#B49AF4] font-mono">{bottom?.price}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Link to Closest Verified Mannequin Look */}
-            {suggestedPreset && (
-              <div className="mt-2 pt-2 border-t border-white/[0.08] flex items-center justify-between text-[10.5px]">
-                <span className="text-[#AAA5B5]">
-                  Matching Predefined Look available:
+                <span className="text-[9.5px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-medium">
+                  Studio Image Pending
                 </span>
-                <button
-                  onClick={() => onApplyPreset(suggestedPreset.id)}
-                  className="text-[#B49AF4] hover:text-[#C4ADFA] font-medium flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  View {suggestedPreset.shortName}
-                  <ArrowRight className="w-3 h-3" />
-                </button>
               </div>
-            )}
-          </div>
-        )}
+              <p className="text-[10.5px] text-[#AAA5B5] leading-relaxed">
+                Selected: <span className="text-[#F5F1F8] font-medium">{displayedLookTitle}</span>. A realistic studio mannequin photograph is currently not available for this exact combination.
+              </p>
+              {suggestedPreset && (
+                <div className="pt-1.5 border-t border-white/[0.08] flex items-center justify-between">
+                  <span className="text-[10px] text-[#AAA5B5]">
+                    Recommended Studio Look: <span className="text-[#B49AF4] font-medium">{suggestedPreset.shortName}</span>
+                  </span>
+                  <button
+                    onClick={() => onApplyPreset(suggestedPreset.id)}
+                    className="px-2.5 py-1 rounded-lg bg-[#B49AF4]/20 hover:bg-[#B49AF4]/30 border border-[#B49AF4]/40 text-[#F5F1F8] text-[10px] font-medium flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    Equip Verified Look
+                    <ArrowRight className="w-3 h-3 text-[#B49AF4]" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* COMPACT GLASS TOOLBAR DIRECTLY BELOW THE MANNEQUIN */}
