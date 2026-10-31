@@ -1,28 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Shirt, Sparkles, Layers, Scissors, Footprints, ShoppingBag, 
-  Heart, ChevronRight, ChevronLeft, Bookmark, RotateCw, Info,
-  ExternalLink, Check, AlertCircle, RefreshCw
+  Heart, ChevronRight, ChevronLeft, Bookmark, RotateCcw, 
+  ExternalLink, Check, Info, Eye
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import OutfitPreview from '../components/OutfitPreview';
 import HowItWorksModal from '../components/HowItWorksModal';
 import AboutModal from '../components/AboutModal';
 import SavedOutfitsModal from '../components/SavedOutfitsModal';
 import { getProducts, getProductStyling } from '../services/api';
-
-// Studio asset imports
-import showroomBg from '../assets/studio/showroom_bg.jpg';
-import chamberFull from '../assets/studio/chamber_full.png';
-import thumb1 from '../assets/studio/thumb_look_1.png';
-import thumb2 from '../assets/studio/thumb_look_2.png';
-import thumb3 from '../assets/studio/thumb_look_3.png';
-import thumb4 from '../assets/studio/thumb_look_4.png';
-import thumb5 from '../assets/studio/thumb_look_5.png';
-
-import logoMyntra from '../assets/studio/logo_myntra.png';
-import logoAjio from '../assets/studio/logo_ajio.png';
-import logoHm from '../assets/studio/logo_hm.png';
-import logoZara from '../assets/studio/logo_zara.png';
 
 export default function StudioPage() {
   // Modal states
@@ -31,17 +18,20 @@ export default function StudioPage() {
   const [savedModalOpen, setSavedModalOpen] = useState(false);
 
   // Category and Catalog State
-  const [activeCategory, setActiveCategory] = useState('tops'); // 'tops', 'dresses', 'jeans_trousers', 'skirts', 'shoes', 'bags'
+  const [activeCategory, setActiveCategory] = useState('tops');
   const [catalogProducts, setCatalogProducts] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
 
-  // Current Outfit Selection
-  const [selectedProduct, setSelectedProduct] = useState(null); // The primary selected piece
-  const [selectedBottom, setSelectedBottom] = useState(null);
-  const [selectedShoes, setSelectedShoes] = useState(null);
-  const [selectedBag, setSelectedBag] = useState(null);
+  // Single Shared Outfit State (Required by Part 3)
+  const [selectedOutfit, setSelectedOutfit] = useState({
+    top: null,
+    bottom: null,
+    dress: null,
+    shoes: null,
+    bag: null
+  });
 
-  // Styling & Computer Vision Data
+  // CV Data
   const [similarStyles, setSimilarStyles] = useState([]);
   const [complementaryPieces, setComplementaryPieces] = useState({
     bottoms: [],
@@ -50,10 +40,8 @@ export default function StudioPage() {
     accessories: []
   });
   const [curatedOutfits, setCuratedOutfits] = useState([]);
-  const [activeLookIndex, setActiveLookIndex] = useState(0); // 0..4 for Look 1/5 .. 5/5
+  const [activeLookIndex, setActiveLookIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('bottoms'); // 'bottoms', 'shoes', 'bags', 'accessories'
-  const [bodyType, setBodyType] = useState('Regular'); // 'Regular', 'Petite', 'Curvy', 'Plus Size'
-  const [isRotating, setIsRotating] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   // Wishlist and Saved Outfits (localStorage)
@@ -85,15 +73,12 @@ export default function StudioPage() {
     { id: 'bags', label: 'Bags & Accessories', icon: <ShoppingBag className="w-4 h-4" /> },
   ];
 
-  // Look thumbnails mapping
-  const lookThumbs = [thumb1, thumb2, thumb3, thumb4, thumb5];
-
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 2800);
   };
 
-  // 1. Initial Load: Fetch catalog and load default Look 1
+  // 1. Initial Load: Fetch catalog and load default initial outfit
   useEffect(() => {
     async function initCatalog() {
       try {
@@ -102,10 +87,26 @@ export default function StudioPage() {
         const prods = data.products || [];
         setCatalogProducts(prods);
 
-        // Load Product #1 (Blush Floral Puff-Sleeve Top) as default
-        if (prods.length > 0) {
-          const defaultProd = prods.find(p => p.id === 1) || prods[0];
-          await loadProductStyling(defaultProd);
+        // Pre-equip default starter outfit:
+        // Top: ID 1 (Blush Floral Puff-Sleeve Top)
+        // Bottom: ID 10 (Light Wash Straight Wide-Leg Jeans)
+        // Shoes: ID 29 (Minimalist White Leather Tennis Sneakers)
+        // Bag: ID 24 (Blush Rose Leather Crossbody Bag)
+        const defaultTop = prods.find(p => p.id === 1) || prods[0];
+        const defaultBottom = prods.find(p => p.id === 10);
+        const defaultShoes = prods.find(p => p.id === 29);
+        const defaultBag = prods.find(p => p.id === 24);
+
+        setSelectedOutfit({
+          top: defaultTop || null,
+          bottom: defaultBottom || null,
+          dress: null,
+          shoes: defaultShoes || null,
+          bag: defaultBag || null
+        });
+
+        if (defaultTop) {
+          await triggerCVSimilarity(defaultTop.id);
         }
       } catch (err) {
         console.error("Failed to load catalog:", err);
@@ -117,31 +118,145 @@ export default function StudioPage() {
   }, []);
 
   // 2. Fetch Computer Vision styling for a product
-  const loadProductStyling = async (prod) => {
+  const triggerCVSimilarity = async (productId) => {
     try {
-      setSelectedProduct(prod);
-      const data = await getProductStyling(prod.id);
-      
+      const data = await getProductStyling(productId);
       if (data.success) {
         setSimilarStyles(data.similar_styles || []);
         setComplementaryPieces(data.complementary_pieces || { bottoms: [], shoes: [], bags: [], accessories: [] });
         setCuratedOutfits(data.curated_outfits || []);
-
-        // Apply outfit matching defaults for complete look
-        const pieces = data.complementary_pieces || {};
-        if (pieces.bottoms && pieces.bottoms.length > 0) {
-          setSelectedBottom(pieces.bottoms[0]);
-        }
-        if (pieces.shoes && pieces.shoes.length > 0) {
-          setSelectedShoes(pieces.shoes[0]);
-        }
-        if (pieces.bags && pieces.bags.length > 0) {
-          setSelectedBag(pieces.bags[0]);
-        }
       }
     } catch (err) {
       console.error("Error loading CV styling:", err);
     }
+  };
+
+  // Central Unified Garment Selection (Required by Parts 3 & 5)
+  const selectGarment = (item) => {
+    if (!item) return;
+    const cat = item.category;
+
+    if (cat === 'tops') {
+      setSelectedOutfit(prev => ({
+        ...prev,
+        top: item,
+        dress: null // Clear dress when choosing a top
+      }));
+      triggerCVSimilarity(item.id);
+      showToast(`Selected top: ${item.name}`);
+    } else if (cat === 'jeans' || cat === 'trousers' || cat === 'skirts') {
+      setSelectedOutfit(prev => ({
+        ...prev,
+        bottom: item,
+        dress: null // Clear dress when choosing a bottom
+      }));
+      showToast(`Selected bottom: ${item.name}`);
+    } else if (cat === 'dresses') {
+      setSelectedOutfit(prev => ({
+        ...prev,
+        dress: item
+        // top and bottom hidden automatically in OutfitPreview
+      }));
+      triggerCVSimilarity(item.id);
+      showToast(`Selected dress: ${item.name}`);
+    } else if (cat === 'shoes') {
+      setSelectedOutfit(prev => ({
+        ...prev,
+        shoes: item
+      }));
+      showToast(`Selected shoes: ${item.name}`);
+    } else if (cat === 'handbags') {
+      setSelectedOutfit(prev => ({
+        ...prev,
+        bag: item
+      }));
+      showToast(`Selected bag: ${item.name}`);
+    }
+  };
+
+  // Remove a garment piece from the shared outfit state
+  const handleRemoveItem = (slot) => {
+    setSelectedOutfit(prev => ({
+      ...prev,
+      [slot]: null
+    }));
+    showToast(`Removed ${slot} from mannequin`);
+  };
+
+  // Reset entire outfit to default separates (Part 6)
+  const handleResetOutfit = () => {
+    const defaultTop = catalogProducts.find(p => p.id === 1);
+    const defaultBottom = catalogProducts.find(p => p.id === 10);
+    const defaultShoes = catalogProducts.find(p => p.id === 29);
+    const defaultBag = catalogProducts.find(p => p.id === 24);
+
+    setSelectedOutfit({
+      top: defaultTop || null,
+      bottom: defaultBottom || null,
+      dress: null,
+      shoes: defaultShoes || null,
+      bag: defaultBag || null
+    });
+    setActiveLookIndex(0);
+    if (defaultTop) triggerCVSimilarity(defaultTop.id);
+    showToast(`Outfit reset to default ensemble.`);
+  };
+
+  // Curated 5 Ensembles (Outfit 1/5 .. 5/5)
+  const curatedEnsembles = [
+    {
+      name: "Look 1: Blush Floral & Wide Denim",
+      topId: 1, bottomId: 10, shoesId: 29, bagId: 24, dressId: null
+    },
+    {
+      name: "Look 2: Cream Botanical & Ecru Trousers",
+      topId: 2, bottomId: 11, shoesId: 30, bagId: 23, dressId: null
+    },
+    {
+      name: "Look 3: Dusty Rose & Sunray Pleated Skirt",
+      topId: 3, bottomId: 13, shoesId: 31, bagId: 25, dressId: null
+    },
+    {
+      name: "Look 4: Crimson Peasant & Charcoal Pants",
+      topId: 4, bottomId: 16, shoesId: 32, bagId: 27, dressId: null
+    },
+    {
+      name: "Look 5: Sage Linen & Camel Fluid Trousers",
+      topId: 8, bottomId: 14, shoesId: 33, bagId: 26, dressId: null
+    }
+  ];
+
+  const applyCuratedLook = (index) => {
+    const look = curatedEnsembles[index];
+    if (!look) return;
+    setActiveLookIndex(index);
+
+    const newTop = catalogProducts.find(p => p.id === look.topId);
+    const newBottom = catalogProducts.find(p => p.id === look.bottomId);
+    const newShoes = catalogProducts.find(p => p.id === look.shoesId);
+    const newBag = catalogProducts.find(p => p.id === look.bagId);
+    const newDress = look.dressId ? catalogProducts.find(p => p.id === look.dressId) : null;
+
+    setSelectedOutfit({
+      top: newTop || null,
+      bottom: newBottom || null,
+      dress: newDress || null,
+      shoes: newShoes || null,
+      bag: newBag || null
+    });
+
+    if (newTop) triggerCVSimilarity(newTop.id);
+    showToast(`Switched to Curated ${look.name}`);
+  };
+
+  const handlePrevLook = () => {
+    const nextIdx = (activeLookIndex - 1 + curatedEnsembles.length) % curatedEnsembles.length;
+    applyCuratedLook(nextIdx);
+  };
+
+  const handleNextLook = () => {
+    const nextIdx = (activeLookIndex + 1) % curatedEnsembles.length;
+    applyCuratedLook(nextIdx);
   };
 
   // Filter left catalog products based on active category
@@ -154,30 +269,6 @@ export default function StudioPage() {
     if (activeCategory === 'bags') return p.category === 'handbags';
     return true;
   });
-
-  // Handle switching curated look from 1/5 to 5/5
-  const handleSelectCuratedLook = (index) => {
-    setActiveLookIndex(index);
-    if (curatedOutfits && curatedOutfits[index]) {
-      const look = curatedOutfits[index];
-      if (look.top) setSelectedProduct(look.top);
-      if (look.bottom) setSelectedBottom(look.bottom);
-      if (look.shoes) setSelectedShoes(look.shoes);
-      if (look.bag) setSelectedBag(look.bag);
-      showToast(`Switched to Curated ${look.name || `Outfit ${index + 1}/5`}`);
-    }
-  };
-
-  // Next / Prev Curated Look
-  const handlePrevLook = () => {
-    const nextIdx = (activeLookIndex - 1 + 5) % 5;
-    handleSelectCuratedLook(nextIdx);
-  };
-
-  const handleNextLook = () => {
-    const nextIdx = (activeLookIndex + 1) % 5;
-    handleSelectCuratedLook(nextIdx);
-  };
 
   // Toggle Item in Wishlist
   const toggleWishlist = (product, e) => {
@@ -194,31 +285,43 @@ export default function StudioPage() {
     localStorage.setItem('voguevision_wishlist', JSON.stringify(updated));
   };
 
-  // Save Current Outfit to LocalStorage
+  // Save Current Outfit to LocalStorage (Part 6)
   const handleSaveOutfit = () => {
+    const activeMain = selectedOutfit.dress || selectedOutfit.top;
     const newOutfit = {
       id: Date.now(),
-      name: `${selectedProduct?.name || 'Look'} Ensemble`,
-      top: selectedProduct,
-      bottom: selectedBottom,
-      shoes: selectedShoes,
-      bag: selectedBag,
-      bodyType: bodyType,
+      name: `${activeMain?.name || 'Custom'} Ensemble`,
+      top: selectedOutfit.top,
+      bottom: selectedOutfit.bottom,
+      dress: selectedOutfit.dress,
+      shoes: selectedOutfit.shoes,
+      bag: selectedOutfit.bag,
+      productIds: {
+        top: selectedOutfit.top?.id || null,
+        bottom: selectedOutfit.bottom?.id || null,
+        dress: selectedOutfit.dress?.id || null,
+        shoes: selectedOutfit.shoes?.id || null,
+        bag: selectedOutfit.bag?.id || null,
+      },
       savedAt: new Date().toISOString()
     };
     const updated = [newOutfit, ...savedOutfits];
     setSavedOutfits(updated);
     localStorage.setItem('voguevision_saved_outfits', JSON.stringify(updated));
-    showToast(`Outfit saved successfully to your wardrobe!`);
+    showToast(`Outfit successfully saved to your wardrobe!`);
   };
 
   // Load a Saved Outfit from Modal
   const handleLoadSavedOutfit = (outfit) => {
-    if (outfit.top) setSelectedProduct(outfit.top);
-    if (outfit.bottom) setSelectedBottom(outfit.bottom);
-    if (outfit.shoes) setSelectedShoes(outfit.shoes);
-    if (outfit.bag) setSelectedBag(outfit.bag);
-    if (outfit.bodyType) setBodyType(outfit.bodyType);
+    setSelectedOutfit({
+      top: outfit.top || null,
+      bottom: outfit.bottom || null,
+      dress: outfit.dress || null,
+      shoes: outfit.shoes || null,
+      bag: outfit.bag || null
+    });
+    if (outfit.top) triggerCVSimilarity(outfit.top.id);
+    else if (outfit.dress) triggerCVSimilarity(outfit.dress.id);
     showToast(`Loaded ${outfit.name}!`);
   };
 
@@ -230,10 +333,11 @@ export default function StudioPage() {
     showToast(`Outfit removed.`);
   };
 
-  // Retailer Search links
+  // Retailer Search links (Part 7)
   const handleRetailerSearch = (retailerName) => {
-    if (!selectedProduct) return;
-    const query = `${selectedProduct.primary_color || ''} ${selectedProduct.name} ${selectedProduct.category}`.trim();
+    const activeItem = selectedOutfit.dress || selectedOutfit.top || selectedOutfit.bottom;
+    if (!activeItem) return;
+    const query = `${activeItem.primary_color || ''} ${activeItem.name} ${activeItem.category}`.trim();
     let url = '';
     
     switch (retailerName) {
@@ -255,55 +359,54 @@ export default function StudioPage() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  return (
-    <div 
-      className="min-h-screen w-full relative flex flex-col font-sans select-none overflow-x-hidden"
-      style={{
-        backgroundImage: `radial-gradient(circle at 50% 30%, rgba(200, 180, 232, 0.45), transparent 70%), url(${showroomBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Soft Ambient Overlay for Futuristic Glass Aesthetic */}
-      <div className="absolute inset-0 bg-[#F8F5FA]/60 backdrop-blur-[2px] pointer-events-none" />
+  // Determine if a product is currently active in the selected outfit
+  const isProductSelected = (product) => {
+    if (!product) return false;
+    return (
+      selectedOutfit.top?.id === product.id ||
+      selectedOutfit.bottom?.id === product.id ||
+      selectedOutfit.dress?.id === product.id ||
+      selectedOutfit.shoes?.id === product.id ||
+      selectedOutfit.bag?.id === product.id
+    );
+  };
 
+  return (
+    <div className="min-h-screen w-full relative flex flex-col font-sans select-none overflow-x-hidden bg-[#111318] text-[#F5F5F7]">
       {/* Header */}
-      <div className="relative z-30">
-        <Navbar 
-          onOpenHowItWorks={() => setHowItWorksOpen(true)}
-          onOpenAbout={() => setAboutOpen(true)}
-          onOpenSaved={() => setSavedModalOpen(true)}
-          savedCount={savedOutfits.length}
-        />
-      </div>
+      <Navbar 
+        onOpenHowItWorks={() => setHowItWorksOpen(true)}
+        onOpenAbout={() => setAboutOpen(true)}
+        onOpenSaved={() => setSavedModalOpen(true)}
+        savedCount={savedOutfits.length}
+      />
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#241B35]/90 backdrop-blur-md text-white text-xs font-medium shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
-          <Sparkles className="w-3.5 h-3.5 text-[#C8B4E8]" />
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-[#191C22]/95 border border-[#A78BFA]/40 text-white text-xs font-medium shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300">
+          <Sparkles className="w-3.5 h-3.5 text-[#A78BFA]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* MAIN 3-COLUMN STUDIO LAYOUT */}
-      <main className="relative z-20 flex-1 px-4 lg:px-7 pb-6 pt-1 max-w-[1720px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <main className="relative z-20 flex-1 px-4 lg:px-7 pb-8 pt-2 max-w-[1720px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* ========================================================= */}
         {/* LEFT COLUMN: 01 — Choose Your Style (Span 3) */}
         {/* ========================================================= */}
         <section className="lg:col-span-3 flex flex-col gap-4">
-          <div className="glass-panel rounded-3xl p-5 border border-white/70 shadow-[0_12px_40px_rgba(80,40,120,0.08)]">
+          <div className="dark-glass-panel rounded-3xl p-5 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
             {/* Section Header */}
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-7 h-7 rounded-full bg-[#8B5AC2] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+              <div className="w-7 h-7 rounded-full bg-[#A78BFA] text-[#111318] font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
                 1
               </div>
               <div>
-                <h2 className="text-lg font-serif font-bold text-[#241B35] leading-tight">
+                <h2 className="text-lg font-serif font-bold text-white leading-tight">
                   Choose Your Style
                 </h2>
-                <p className="text-[11.5px] text-[#241B35]/65 mt-0.5">
+                <p className="text-[11.5px] text-[#A8ADB8] mt-0.5">
                   Pick an item from our curated collection
                 </p>
               </div>
@@ -319,17 +422,17 @@ export default function StudioPage() {
                     onClick={() => setActiveCategory(cat.id)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       isActive 
-                        ? 'bg-[#8B5AC2] text-white shadow-[0_4px_16px_rgba(139,90,194,0.35)]' 
-                        : 'bg-white/40 text-[#241B35]/85 hover:bg-white/70 hover:text-[#8B5AC2] border border-white/60'
+                        ? 'bg-[#A78BFA] text-[#111318] shadow-[0_4px_16px_rgba(167,139,250,0.35)] font-bold' 
+                        : 'bg-white/5 text-[#A8ADB8] hover:bg-white/10 hover:text-white border border-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className={isActive ? 'text-white' : 'text-[#8B5AC2]'}>
+                      <span className={isActive ? 'text-[#111318]' : 'text-[#A78BFA]'}>
                         {cat.icon}
                       </span>
                       <span>{cat.label}</span>
                     </div>
-                    <ChevronRight className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#241B35]/40'}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 ${isActive ? 'text-[#111318]' : 'text-[#A8ADB8]/50'}`} />
                   </button>
                 );
               })}
@@ -339,21 +442,21 @@ export default function StudioPage() {
             <div className="grid grid-cols-3 gap-2.5">
               {catalogLoading ? (
                 Array.from({ length: 6 }).map((_, idx) => (
-                  <div key={idx} className="aspect-square rounded-2xl bg-white/40 animate-pulse border border-white/60" />
+                  <div key={idx} className="aspect-square rounded-2xl bg-white/5 animate-pulse border border-white/5" />
                 ))
               ) : (
                 filteredCatalog.slice(0, 9).map((product) => {
-                  const isSelected = selectedProduct?.id === product.id;
+                  const isSelected = isProductSelected(product);
                   const isFav = wishlist.some(w => w.id === product.id);
 
                   return (
                     <div
                       key={product.id}
-                      onClick={() => loadProductStyling(product)}
+                      onClick={() => selectGarment(product)}
                       className={`group relative aspect-square rounded-2xl overflow-hidden cursor-pointer p-1.5 transition-all duration-300 ${
                         isSelected 
-                          ? 'bg-white border-2 border-[#8B5AC2] shadow-[0_0_18px_rgba(139,90,194,0.38)] scale-[1.02]' 
-                          : 'bg-white/55 hover:bg-white/80 border border-white/70 hover:shadow-md'
+                          ? 'bg-white/15 border-2 border-[#A78BFA] shadow-[0_0_18px_rgba(167,139,250,0.45)] scale-[1.02]' 
+                          : 'bg-white/5 hover:bg-white/10 border border-white/10 hover:shadow-lg'
                       }`}
                       title={`${product.name} — ${product.price || '₹1,299'}`}
                     >
@@ -369,15 +472,15 @@ export default function StudioPage() {
                         onClick={(e) => toggleWishlist(product, e)}
                         className={`absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                           isFav 
-                            ? 'bg-[#8B5AC2] text-white' 
-                            : 'bg-white/80 text-[#241B35]/60 hover:text-[#8B5AC2] opacity-0 group-hover:opacity-100'
+                            ? 'bg-[#A78BFA] text-[#111318]' 
+                            : 'bg-black/60 text-white/70 hover:text-white opacity-0 group-hover:opacity-100'
                         }`}
                       >
                         <Heart className="w-3 h-3 fill-current" />
                       </button>
 
                       {/* Tooltip on hover with name & price */}
-                      <div className="absolute inset-x-1 bottom-1 bg-[#241B35]/85 backdrop-blur-xs text-white text-[9.5px] px-1.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity truncate text-center">
+                      <div className="absolute inset-x-1 bottom-1 bg-[#111318]/90 backdrop-blur-xs text-white text-[9.5px] px-1.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity truncate text-center border border-white/10">
                         {product.name}
                       </div>
                     </div>
@@ -390,7 +493,7 @@ export default function StudioPage() {
             <div className="mt-4 pt-2">
               <button
                 onClick={() => showToast(`Showing all available ${activeCategory} in studio catalog.`)}
-                className="w-full py-2.5 rounded-full text-xs font-semibold text-[#8B5AC2] bg-white/50 hover:bg-white/80 border border-white/80 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                className="w-full py-2.5 rounded-full text-xs font-semibold text-[#A78BFA] bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
                 <span>View All {categories.find(c => c.id === activeCategory)?.label}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -405,187 +508,62 @@ export default function StudioPage() {
         <section className="lg:col-span-5 flex flex-col items-center">
           <div className="w-full relative flex flex-col items-center">
             
-            {/* The Main Glass Showroom Chamber */}
-            <div className="relative w-full max-w-[460px] aspect-[460/620] rounded-[42px] p-2 flex items-center justify-center overflow-hidden">
-              
-              {/* Cylindrical Glass Enclosure Highlights */}
-              <div className="absolute inset-0 rounded-[42px] bg-gradient-to-b from-white/45 via-white/20 to-white/50 backdrop-blur-[14px] border border-white/70 shadow-[0_20px_50px_rgba(80,40,120,0.14)] pointer-events-none" />
-              <div className="absolute inset-y-4 left-3 w-3 rounded-full bg-gradient-to-r from-white/70 to-transparent pointer-events-none" />
-              <div className="absolute inset-y-4 right-3 w-3 rounded-full bg-gradient-to-l from-white/70 to-transparent pointer-events-none" />
+            {/* Dedicated Layered OutfitPreview Component (Part 3 & 4) */}
+            <OutfitPreview
+              selectedOutfit={selectedOutfit}
+              onRemoveItem={handleRemoveItem}
+              onSelectCategory={(cat) => setActiveCategory(cat)}
+            />
 
-              {/* Glowing Circular Base Platform Floor Glow */}
-              <div className="absolute bottom-6 inset-x-8 h-24 rounded-full bg-[#8B5AC2]/25 blur-2xl pointer-events-none" />
-              <div className="absolute bottom-9 inset-x-12 h-14 rounded-full bg-gradient-to-t from-[#C8B4E8]/60 to-white/40 border border-white/80 shadow-[0_8px_30px_rgba(139,90,194,0.3)] pointer-events-none" />
-
-              {/* Top-Left 360° Glass Control */}
-              <button
-                onClick={() => {
-                  setIsRotating(true);
-                  showToast("360° Studio perspective rotation active.");
-                  setTimeout(() => setIsRotating(false), 2400);
-                }}
-                className="absolute top-5 left-5 z-20 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/80 shadow-xs flex items-center gap-1.5 text-xs font-semibold text-[#241B35] hover:bg-white hover:text-[#8B5AC2] transition-all cursor-pointer group"
-              >
-                <RotateCw className={`w-3.5 h-3.5 text-[#8B5AC2] transition-transform duration-700 ${isRotating ? 'rotate-180' : 'group-hover:rotate-45'}`} />
-                <span>360°</span>
-              </button>
-
-              {/* Floating Left Garment Category Selectors (Top, Bottom, Shoes, Bag) */}
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2.5">
-                {[
-                  { id: 'tops', label: 'Top', icon: <Shirt className="w-4 h-4" /> },
-                  { id: 'jeans_trousers', label: 'Bottom', icon: <Layers className="w-4 h-4" /> },
-                  { id: 'shoes', label: 'Shoes', icon: <Footprints className="w-4 h-4" /> },
-                  { id: 'bags', label: 'Bag', icon: <ShoppingBag className="w-4 h-4" /> },
-                ].map((item) => {
-                  const isActive = activeCategory === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveCategory(item.id);
-                        showToast(`Switched browsing category to ${item.label}`);
-                      }}
-                      className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[9px] font-bold tracking-tight transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#8B5AC2] text-white shadow-[0_4px_16px_rgba(139,90,194,0.4)] scale-105'
-                          : 'bg-white/65 backdrop-blur-md text-[#241B35] hover:bg-white hover:text-[#8B5AC2] border border-white/80 shadow-2xs'
-                      }`}
-                      title={`Select ${item.label}`}
-                    >
-                      <span>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Floating Right Body Type Selector Panel */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-2.5 shadow-[0_8px_24px_rgba(80,40,120,0.08)] flex flex-col items-center gap-2">
-                <div className="flex items-center gap-1 text-[10px] font-bold text-[#241B35]/80 pb-1 border-b border-white/60 w-full justify-center">
-                  <span>Body Type</span>
-                  <Info className="w-3 h-3 text-[#8B5AC2]" />
-                </div>
-                {['Regular', 'Petite', 'Curvy', 'Plus Size'].map((type) => {
-                  const isSelected = bodyType === type;
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        setBodyType(type);
-                        showToast(`Mannequin body silhouette set to: ${type}`);
-                      }}
-                      className={`w-16 py-1.5 px-1 rounded-xl text-[10px] font-semibold transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 ${
-                        isSelected
-                          ? 'bg-[#8B5AC2] text-white shadow-xs'
-                          : 'bg-white/40 text-[#241B35]/80 hover:bg-white/70 hover:text-[#8B5AC2]'
-                      }`}
-                    >
-                      {/* Stylized Silhouette Icon representation */}
-                      <div className="w-2.5 h-5 rounded-full border border-current opacity-80" />
-                      <span>{type}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Center Mannequin Showcase Image */}
-              <div className={`relative z-10 w-full h-full flex items-center justify-center transition-transform duration-700 ${isRotating ? 'scale-95 rotate-1' : ''}`}>
-                <img 
-                  src={chamberFull} 
-                  alt="Futuristic Glass Mannequin Display"
-                  className="max-h-[92%] max-w-[92%] object-contain drop-shadow-[0_15px_30px_rgba(80,40,120,0.22)]"
-                />
-
-                {/* Interactive Dynamic Overlays / Badges showing selected outfit items */}
-                <div className="absolute bottom-18 left-8 right-8 flex items-center justify-between pointer-events-none">
-                  {/* Left arrow on platform */}
-                  <button 
-                    onClick={handlePrevLook}
-                    className="pointer-events-auto w-8 h-8 rounded-full bg-white/70 backdrop-blur-md border border-white/90 flex items-center justify-center text-[#241B35] hover:text-[#8B5AC2] hover:bg-white shadow-xs transition-all cursor-pointer"
-                    title="Previous Outfit"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  {/* Active Equipped Piece Pills */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-white text-[10.5px] font-bold text-[#8B5AC2] shadow-2xs">
-                      {selectedProduct?.name || 'Blush Floral Puff-Sleeve Top'}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#241B35]/75 backdrop-blur-xs text-[9px] font-medium text-white shadow-2xs">
-                      paired with {selectedBottom?.name || 'Wide-Leg Jeans'}
-                    </span>
-                  </div>
-
-                  {/* Right arrow on platform */}
-                  <button 
-                    onClick={handleNextLook}
-                    className="pointer-events-auto w-8 h-8 rounded-full bg-white/70 backdrop-blur-md border border-white/90 flex items-center justify-center text-[#241B35] hover:text-[#8B5AC2] hover:bg-white shadow-xs transition-all cursor-pointer"
-                    title="Next Outfit"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Below Mannequin: Outfit Switcher and Save Action */}
-            <div className="mt-3 flex flex-col items-center gap-2.5 w-full max-w-[420px]">
-              {/* Outfit Indicator Capsule */}
-              <div className="px-4 py-1 rounded-full bg-white/60 backdrop-blur-md border border-white/80 text-[11px] font-bold text-[#8B5AC2] shadow-2xs">
-                Outfit {activeLookIndex + 1}/5
-              </div>
-
-              {/* 5 Outfit Look Thumbnails Strip */}
-              <div className="flex items-center gap-2 bg-white/40 backdrop-blur-md border border-white/70 rounded-2xl p-1.5 shadow-xs">
+            {/* Below Mannequin: Outfit Controls (Part 6) */}
+            <div className="mt-4 flex flex-col items-center gap-3 w-full max-w-[440px]">
+              {/* Outfit Indicator Capsule with Next/Prev Controls */}
+              <div className="flex items-center justify-between w-full px-4 py-2 rounded-2xl bg-white/5 border border-white/10">
                 <button 
                   onClick={handlePrevLook}
-                  className="w-7 h-7 rounded-xl bg-white/60 hover:bg-white flex items-center justify-center text-[#241B35] transition-all cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#A8ADB8] hover:text-white flex items-center gap-1 text-[11px] font-semibold transition-all cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Prev</span>
                 </button>
 
-                <div className="flex items-center gap-1.5">
-                  {lookThumbs.map((thumb, idx) => {
-                    const isSelected = activeLookIndex === idx;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleSelectCuratedLook(idx)}
-                        className={`relative rounded-xl overflow-hidden p-0.5 transition-all cursor-pointer ${
-                          isSelected 
-                            ? 'ring-2 ring-[#8B5AC2] shadow-[0_0_12px_rgba(139,90,194,0.4)] scale-105' 
-                            : 'opacity-70 hover:opacity-100'
-                        }`}
-                        title={`Curated Look ${idx + 1}/5`}
-                      >
-                        <img 
-                          src={thumb} 
-                          alt={`Look ${idx + 1}`} 
-                          className="w-9 h-12 object-cover rounded-lg"
-                        />
-                      </button>
-                    );
-                  })}
+                <div className="text-center">
+                  <span className="text-xs font-bold text-[#A78BFA] tracking-wide">
+                    Outfit {activeLookIndex + 1}/5
+                  </span>
+                  <p className="text-[10px] text-[#A8ADB8]">
+                    {curatedEnsembles[activeLookIndex]?.name}
+                  </p>
                 </div>
 
                 <button 
                   onClick={handleNextLook}
-                  className="w-7 h-7 rounded-xl bg-white/60 hover:bg-white flex items-center justify-center text-[#241B35] transition-all cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#A8ADB8] hover:text-white flex items-center gap-1 text-[11px] font-semibold transition-all cursor-pointer"
                 >
+                  <span>Next</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Primary Purple Action: Save Outfit */}
-              <button
-                onClick={handleSaveOutfit}
-                className="w-full max-w-[280px] py-2.5 rounded-full text-xs font-bold tracking-wide bg-[#8B5AC2] text-white hover:bg-[#7848AE] shadow-[0_8px_20px_rgba(139,90,194,0.35)] flex items-center justify-center gap-2 transition-all cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <Bookmark className="w-4 h-4 fill-white" />
-                <span>Save Outfit</span>
-              </button>
+              {/* Action Buttons: Save Outfit and Reset Outfit */}
+              <div className="flex items-center gap-2.5 w-full">
+                <button
+                  onClick={handleSaveOutfit}
+                  className="flex-1 py-2.5 rounded-full text-xs font-bold tracking-wide bg-[#A78BFA] text-[#111318] hover:bg-[#BFA5FB] shadow-[0_6px_20px_rgba(167,139,250,0.35)] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <Bookmark className="w-4 h-4 fill-current" />
+                  <span>Save Outfit</span>
+                </button>
+
+                <button
+                  onClick={handleResetOutfit}
+                  className="px-4 py-2.5 rounded-full text-xs font-semibold text-[#A8ADB8] hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Reset outfit to default"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -598,24 +576,24 @@ export default function StudioPage() {
           {/* --------------------------------------------------------- */}
           {/* SECTION 02: Similar Styles (cv2.compareHist Real Scores) */}
           {/* --------------------------------------------------------- */}
-          <div className="glass-panel rounded-3xl p-5 border border-white/70 shadow-[0_12px_40px_rgba(80,40,120,0.08)]">
+          <div className="dark-glass-panel rounded-3xl p-5 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-[#8B5AC2] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-[#A78BFA] text-[#111318] font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
                   2
                 </div>
                 <div>
-                  <h3 className="text-base font-serif font-bold text-[#241B35] leading-tight">
+                  <h3 className="text-base font-serif font-bold text-white leading-tight">
                     Similar Styles
                   </h3>
-                  <p className="text-[11px] text-[#241B35]/65 mt-0.5">
-                    Explore visually similar {selectedProduct?.category || 'tops'} using Computer Vision
+                  <p className="text-[11px] text-[#A8ADB8] mt-0.5">
+                    Explore visually similar {selectedOutfit.top?.category || 'tops'} using Computer Vision
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => showToast("Displaying all ranked similarity matches.")}
-                className="text-[11px] font-semibold text-[#8B5AC2] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
+                className="text-[11px] font-semibold text-[#A78BFA] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
               >
                 <span>View All</span>
                 <ChevronRight className="w-3 h-3" />
@@ -626,14 +604,18 @@ export default function StudioPage() {
             <div className="grid grid-cols-4 gap-2">
               {similarStyles.slice(0, 4).map((sim) => {
                 const isFav = wishlist.some(w => w.id === sim.id);
-                // Real calculated percentage match from OpenCV cv2.compareHist
+                const isSelected = isProductSelected(sim);
                 const matchVal = Math.round(sim.similarity_score || (sim.match_percentage ? sim.match_percentage : 85));
 
                 return (
                   <div
                     key={sim.id}
-                    onClick={() => loadProductStyling(sim)}
-                    className="group relative bg-white/60 hover:bg-white rounded-2xl p-1.5 border border-white/80 hover:border-[#8B5AC2]/40 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                    onClick={() => selectGarment(sim)}
+                    className={`group relative rounded-2xl p-1.5 border transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-white/15 border-2 border-[#A78BFA] shadow-[0_0_12px_rgba(167,139,250,0.4)]'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-[#A78BFA]/30'
+                    }`}
                   >
                     <div className="relative aspect-square rounded-xl overflow-hidden mb-1.5">
                       <img 
@@ -644,7 +626,7 @@ export default function StudioPage() {
                       <button
                         onClick={(e) => toggleWishlist(sim, e)}
                         className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                          isFav ? 'bg-[#8B5AC2] text-white' : 'bg-white/80 text-[#241B35]/60 hover:text-[#8B5AC2]'
+                          isFav ? 'bg-[#A78BFA] text-[#111318]' : 'bg-black/60 text-white/70 hover:text-white'
                         }`}
                       >
                         <Heart className="w-2.5 h-2.5 fill-current" />
@@ -652,17 +634,17 @@ export default function StudioPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-[10px] font-semibold text-[#241B35] leading-snug line-clamp-2">
+                      <h4 className="text-[10px] font-semibold text-white leading-snug line-clamp-2">
                         {sim.name}
                       </h4>
-                      <p className="text-[9.5px] font-medium text-[#241B35]/65 mt-0.5">
+                      <p className="text-[9.5px] font-medium text-[#A8ADB8] mt-0.5">
                         {sim.price || '₹1,299'}
                       </p>
                     </div>
 
                     {/* OpenCV Correlation % Match Badge */}
-                    <div className="mt-1.5 pt-1 border-t border-white/60 flex items-center justify-center">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <div className="mt-1.5 pt-1 border-t border-white/10 flex items-center justify-center">
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                         {matchVal}% match
                       </span>
                     </div>
@@ -675,24 +657,24 @@ export default function StudioPage() {
           {/* --------------------------------------------------------- */}
           {/* SECTION 03: Complete the Look (Color Harmony Rules) */}
           {/* --------------------------------------------------------- */}
-          <div className="glass-panel rounded-3xl p-5 border border-white/70 shadow-[0_12px_40px_rgba(80,40,120,0.08)]">
+          <div className="dark-glass-panel rounded-3xl p-5 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-[#8B5AC2] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-[#A78BFA] text-[#111318] font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
                   3
                 </div>
                 <div>
-                  <h3 className="text-base font-serif font-bold text-[#241B35] leading-tight">
+                  <h3 className="text-base font-serif font-bold text-white leading-tight">
                     Complete the Look
                   </h3>
-                  <p className="text-[11px] text-[#241B35]/65 mt-0.5">
+                  <p className="text-[11px] text-[#A8ADB8] mt-0.5">
                     Recommended items based on colour harmony
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => showToast("Displaying all complementary harmonized pieces.")}
-                className="text-[11px] font-semibold text-[#8B5AC2] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
+                className="text-[11px] font-semibold text-[#A78BFA] hover:underline flex items-center gap-0.5 cursor-pointer flex-shrink-0"
               >
                 <span>View All</span>
                 <ChevronRight className="w-3 h-3" />
@@ -700,7 +682,7 @@ export default function StudioPage() {
             </div>
 
             {/* Category Sub-tabs: Bottoms, Shoes, Bags, Accessories */}
-            <div className="flex items-center gap-1.5 mb-3 bg-white/40 p-1 rounded-full border border-white/60">
+            <div className="flex items-center gap-1.5 mb-3 bg-white/5 p-1 rounded-full border border-white/10">
               {[
                 { id: 'bottoms', label: 'Bottoms' },
                 { id: 'shoes', label: 'Shoes' },
@@ -714,8 +696,8 @@ export default function StudioPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex-1 py-1 px-2 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer text-center ${
                       isActive
-                        ? 'bg-white text-[#8B5AC2] shadow-xs'
-                        : 'text-[#241B35]/70 hover:text-[#8B5AC2]'
+                        ? 'bg-[#A78BFA] text-[#111318] font-bold shadow-xs'
+                        : 'text-[#A8ADB8] hover:text-white'
                     }`}
                   >
                     {tab.label}
@@ -728,25 +710,16 @@ export default function StudioPage() {
             <div className="flex gap-2.5 overflow-x-auto pb-1.5">
               {(complementaryPieces[activeTab] || complementaryPieces.bottoms || []).slice(0, 5).map((item) => {
                 const isFav = wishlist.some(w => w.id === item.id);
-                const isEquipped = (
-                  (activeTab === 'bottoms' && selectedBottom?.id === item.id) ||
-                  (activeTab === 'shoes' && selectedShoes?.id === item.id) ||
-                  (activeTab === 'bags' && selectedBag?.id === item.id)
-                );
+                const isEquipped = isProductSelected(item);
 
                 return (
                   <div
                     key={item.id}
-                    onClick={() => {
-                      if (activeTab === 'bottoms') setSelectedBottom(item);
-                      else if (activeTab === 'shoes') setSelectedShoes(item);
-                      else if (activeTab === 'bags') setSelectedBag(item);
-                      showToast(`Equipped ${item.name} onto mannequin!`);
-                    }}
-                    className={`flex-shrink-0 w-24 p-1.5 rounded-2xl bg-white/60 hover:bg-white border transition-all cursor-pointer flex flex-col justify-between ${
+                    onClick={() => selectGarment(item)}
+                    className={`flex-shrink-0 w-24 p-1.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                       isEquipped 
-                        ? 'border-2 border-[#8B5AC2] shadow-xs' 
-                        : 'border-white/80 hover:border-[#8B5AC2]/40'
+                        ? 'bg-white/15 border-2 border-[#A78BFA] shadow-xs' 
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-[#A78BFA]/30'
                     }`}
                   >
                     <div className="relative aspect-square rounded-xl overflow-hidden mb-1">
@@ -758,7 +731,7 @@ export default function StudioPage() {
                       <button
                         onClick={(e) => toggleWishlist(item, e)}
                         className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                          isFav ? 'bg-[#8B5AC2] text-white' : 'bg-white/80 text-[#241B35]/60 hover:text-[#8B5AC2]'
+                          isFav ? 'bg-[#A78BFA] text-[#111318]' : 'bg-black/60 text-white/70 hover:text-white'
                         }`}
                       >
                         <Heart className="w-2.5 h-2.5 fill-current" />
@@ -766,10 +739,10 @@ export default function StudioPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-[9.5px] font-semibold text-[#241B35] leading-tight line-clamp-1">
+                      <h4 className="text-[9.5px] font-semibold text-white leading-tight line-clamp-1">
                         {item.name}
                       </h4>
-                      <p className="text-[9px] font-medium text-[#241B35]/60 mt-0.5">
+                      <p className="text-[9px] font-medium text-[#A8ADB8] mt-0.5">
                         {item.price || '₹1,599'}
                       </p>
                     </div>
@@ -782,19 +755,19 @@ export default function StudioPage() {
           {/* --------------------------------------------------------- */}
           {/* SECTION 04: Find Similar Online (Myntra, AJIO, H&M, ZARA) */}
           {/* --------------------------------------------------------- */}
-          <div className="glass-panel rounded-3xl p-5 border border-white/70 shadow-[0_12px_40px_rgba(80,40,120,0.08)]">
+          <div className="dark-glass-panel rounded-3xl p-5 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
             <div className="flex items-start gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-full bg-[#8B5AC2] text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+              <div className="w-6 h-6 rounded-full bg-[#A78BFA] text-[#111318] font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
                 4
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-base font-serif font-bold text-[#241B35] leading-tight">
+                  <h3 className="text-base font-serif font-bold text-white leading-tight">
                     Find Similar Online
                   </h3>
-                  <Info className="w-3.5 h-3.5 text-[#8B5AC2]/70" />
+                  <Info className="w-3.5 h-3.5 text-[#A78BFA]" />
                 </div>
-                <p className="text-[11px] text-[#241B35]/65 mt-0.5">
+                <p className="text-[11px] text-[#A8ADB8] mt-0.5">
                   Explore more styles from top fashion websites
                 </p>
               </div>
@@ -803,28 +776,30 @@ export default function StudioPage() {
             {/* 4 Branded Retailer Cards */}
             <div className="grid grid-cols-4 gap-2">
               {[
-                { name: 'Myntra', logo: logoMyntra },
-                { name: 'AJIO', logo: logoAjio },
-                { name: 'H&M', logo: logoHm },
-                { name: 'ZARA', logo: logoZara },
+                { name: 'Myntra', badgeColor: '#FF3F6C', label: 'Myntra' },
+                { name: 'AJIO', badgeColor: '#2C4152', label: 'AJIO' },
+                { name: 'H&M', badgeColor: '#E50010', label: 'H&M' },
+                { name: 'ZARA', badgeColor: '#FFFFFF', label: 'ZARA' },
               ].map((retailer) => (
                 <div 
                   key={retailer.name}
-                  className="bg-white/70 hover:bg-white rounded-2xl p-2.5 border border-white/80 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center gap-2"
+                  className="bg-white/5 hover:bg-white/10 rounded-2xl p-2.5 border border-white/10 hover:border-[#A78BFA]/30 transition-all flex flex-col items-center justify-between text-center gap-2"
                 >
-                  <div className="h-8 flex items-center justify-center">
-                    <img 
-                      src={retailer.logo} 
-                      alt={retailer.name}
-                      className="max-h-6 max-w-full object-contain"
-                    />
+                  <div className="h-7 flex items-center justify-center">
+                    <span 
+                      className="text-xs font-serif font-extrabold tracking-wider"
+                      style={{ color: retailer.badgeColor }}
+                    >
+                      {retailer.label}
+                    </span>
                   </div>
 
                   <button
                     onClick={() => handleRetailerSearch(retailer.name)}
-                    className="w-full py-1.5 px-1 rounded-full text-[9px] font-bold text-[#241B35] bg-white hover:bg-[#8B5AC2] hover:text-white border border-white/80 shadow-2xs transition-all flex items-center justify-center gap-0.5 cursor-pointer"
+                    className="w-full py-1.5 px-1 rounded-full text-[9px] font-bold text-white bg-white/10 hover:bg-[#A78BFA] hover:text-[#111318] border border-white/10 transition-all flex items-center justify-center gap-0.5 cursor-pointer"
                   >
-                    <span>Search Similar</span>
+                    <span>Search</span>
+                    <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-70" />
                   </button>
                 </div>
               ))}
