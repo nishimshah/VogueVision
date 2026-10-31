@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Eye, Grid, Shirt, Layers, Footprints, ShoppingBag, X, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { 
+  Eye, Grid, Shirt, Layers, AlertCircle, ArrowRight, 
+  ChevronLeft, ChevronRight, Heart, RotateCcw, Sparkles 
+} from 'lucide-react';
 
 import outfit1Img from '../assets/mannequin/outfit_1.jpg';
 import outfit2Img from '../assets/mannequin/outfit_2.jpg';
@@ -13,8 +16,9 @@ import neutralMannequinImg from '../assets/mannequin/neutral_base.jpg';
 export const PREDEFINED_OUTFITS = [
   {
     id: 1,
-    name: "Look 1: White Tee + Blue Jeans",
-    subtitle: "White fitted t-shirt, blue straight-leg jeans, white sneakers, tan tote",
+    name: "Look 1 / 7 — White Tee + Blue Jeans",
+    shortName: "White Tee + Blue Jeans",
+    occasion: "Casual",
     image: outfit1Img,
     topId: 1,
     bottomId: 6,
@@ -25,8 +29,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 2,
-    name: "Look 2: Black Fitted Top + Beige Trousers",
-    subtitle: "Black fitted top, beige tailored trousers, black loafers, black shoulder bag",
+    name: "Look 2 / 7 — Black Top + Beige Trousers",
+    shortName: "Black Top + Beige Trousers",
+    occasion: "Formal",
     image: outfit2Img,
     topId: 2,
     bottomId: 8,
@@ -37,8 +42,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 3,
-    name: "Look 3: Beige Blouse + Black Trousers",
-    subtitle: "Beige silky blouse, black wide-leg trousers, nude heels, cream handbag",
+    name: "Look 3 / 7 — Beige Blouse + Black Trousers",
+    shortName: "Beige Blouse + Black Trousers",
+    occasion: "Formal",
     image: outfit3Img,
     topId: 3,
     bottomId: 7,
@@ -49,8 +55,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 4,
-    name: "Look 4: White Shirt + Blue Jeans",
-    subtitle: "White button-down shirt, blue straight-leg jeans, white sneakers, black bag",
+    name: "Look 4 / 7 — White Shirt + Blue Jeans",
+    shortName: "White Shirt + Blue Jeans",
+    occasion: "Casual",
     image: outfit4Img,
     topId: 4,
     bottomId: 6,
@@ -61,8 +68,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 5,
-    name: "Look 5: Grey Tank + Cream Midi Skirt",
-    subtitle: "Grey scoop tank top, cream pleated midi skirt, nude heels, cream handbag",
+    name: "Look 5 / 7 — Grey Tank + Cream Skirt",
+    shortName: "Grey Tank + Cream Skirt",
+    occasion: "Casual",
     image: outfit5Img,
     topId: 5,
     bottomId: 9,
@@ -73,8 +81,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 6,
-    name: "Look 6: Black Midi Dress",
-    subtitle: "Black tailored midi dress, nude heels, black shoulder bag",
+    name: "Look 6 / 7 — Black Midi Dress",
+    shortName: "Black Midi Dress",
+    occasion: "Party",
     image: outfit6Img,
     topId: null,
     bottomId: null,
@@ -85,8 +94,9 @@ export const PREDEFINED_OUTFITS = [
   },
   {
     id: 7,
-    name: "Look 7: Beige Sleeveless Midi Dress",
-    subtitle: "Beige sleeveless dress, black loafers, tan tote",
+    name: "Look 7 / 7 — Beige Sleeveless Dress",
+    shortName: "Beige Sleeveless Dress",
+    occasion: "Casual",
     image: outfit7Img,
     topId: null,
     bottomId: null,
@@ -99,17 +109,18 @@ export const PREDEFINED_OUTFITS = [
 
 export default function OutfitPreview({ 
   selectedOutfit, 
-  onRemoveItem, 
-  onApplyPreset,
-  catalogProducts = [] 
+  onPrevLook,
+  onNextLook,
+  onSaveOutfit,
+  onResetOutfit,
+  activeLookIndex,
+  onApplyPreset
 }) {
-  const [activeTab, setActiveTab] = useState('mannequin'); // 'mannequin' | 'board'
+  const [viewMode, setViewMode] = useState('mannequin'); // 'mannequin' | 'board'
 
   const top = selectedOutfit?.top;
   const bottom = selectedOutfit?.bottom;
   const dress = selectedOutfit?.dress;
-  const shoes = selectedOutfit?.shoes;
-  const bag = selectedOutfit?.bag;
 
   // Find exact matching predefined realistic outfit
   const matchedPreset = PREDEFINED_OUTFITS.find(preset => preset.matches(selectedOutfit));
@@ -122,326 +133,242 @@ export default function OutfitPreview({
     return false;
   }) || PREDEFINED_OUTFITS[0];
 
+  const currentLook = PREDEFINED_OUTFITS[activeLookIndex] || PREDEFINED_OUTFITS[0];
+
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full h-full flex flex-col justify-between items-center min-h-0 select-none">
       
-      {/* View Switcher: [Realistic Mannequin Display] | [Curated Outfit Board] */}
-      <div className="mb-3 flex items-center gap-1.5 p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-        <button
-          onClick={() => setActiveTab('mannequin')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
-            activeTab === 'mannequin'
-              ? 'bg-[#A78BFA] text-[#111318] shadow-xs'
-              : 'text-[#A8ADB8] hover:text-white'
-          }`}
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Realistic Mannequin Display</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('board')}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
-            activeTab === 'board'
-              ? 'bg-[#A78BFA] text-[#111318] shadow-xs'
-              : 'text-[#A8ADB8] hover:text-white'
-          }`}
-        >
-          <Grid className="w-3.5 h-3.5" />
-          <span>Curated Outfit Board</span>
-        </button>
+      {/* View Toggle Bar (Extremely Minimal) */}
+      <div className="w-full flex items-center justify-between px-2 mb-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-[#9271BF]" />
+          <span className="text-[11px] font-semibold text-[#292331] uppercase tracking-wider">
+            Virtual Showroom
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 p-0.5 rounded-full bg-white/45 border border-white/60">
+          <button
+            onClick={() => setViewMode('mannequin')}
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
+              viewMode === 'mannequin'
+                ? 'bg-white text-[#292331] shadow-2xs'
+                : 'text-[#6D6574] hover:text-[#292331]'
+            }`}
+          >
+            Mannequin
+          </button>
+          <button
+            onClick={() => setViewMode('board')}
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold transition-all cursor-pointer ${
+              viewMode === 'board'
+                ? 'bg-white text-[#292331] shadow-2xs'
+                : 'text-[#6D6574] hover:text-[#292331]'
+            }`}
+          >
+            Outfit Board
+          </button>
+        </div>
       </div>
 
-      {/* VIEW 1: Realistic Mannequin Display */}
-      {activeTab === 'mannequin' ? (
-        <div className="relative w-full max-w-[440px] aspect-[440/620] rounded-[36px] overflow-hidden mannequin-chamber flex items-center justify-center border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.7)]">
-          
-          {matchedPreset ? (
-            /* 1A. Exact Realistic Predefined Outfit Match */
-            <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-300">
+      {/* CENTER MANNEQUIN DISPLAY CHAMBER */}
+      <div className="relative w-full flex-1 min-h-0 rounded-2xl overflow-hidden mannequin-chamber border border-white/70 shadow-[0_10px_30px_rgba(41,35,49,0.06)] flex items-center justify-center p-1.5">
+        
+        {viewMode === 'mannequin' ? (
+          matchedPreset ? (
+            /* A. Verified Realistic Predefined Outfit Image */
+            <div className="relative w-full h-full flex items-center justify-center animate-in fade-in duration-200">
               <img
                 src={matchedPreset.image}
                 alt={matchedPreset.name}
-                className="w-full h-full object-cover select-none"
+                className="w-full h-full object-contain rounded-xl"
               />
 
-              {/* Verified Realistic Preview Pill */}
-              <div className="absolute top-4 inset-x-4 flex items-center justify-between pointer-events-none">
-                <span className="px-3 py-1 rounded-full bg-[#111318]/80 backdrop-blur-md border border-white/15 text-[10px] font-bold text-[#A78BFA] flex items-center gap-1 shadow-md">
-                  <Sparkles className="w-3 h-3 text-[#A78BFA]" />
-                  <span>Realistic Studio Preview</span>
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[9.5px] font-semibold text-emerald-400">
-                  Verified Look
-                </span>
-              </div>
-
-              {/* Title & Description Overlay */}
-              <div className="absolute bottom-4 inset-x-4 p-3 rounded-2xl bg-[#111318]/85 backdrop-blur-md border border-white/10 text-center">
-                <h4 className="text-xs font-serif font-bold text-white">
-                  {matchedPreset.name}
-                </h4>
-                <p className="text-[10px] text-[#A8ADB8] mt-0.5">
-                  {matchedPreset.subtitle}
-                </p>
+              {/* Minimal Verified Tag */}
+              <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-white/70 backdrop-blur-md border border-white/80 text-[9px] font-bold text-[#9271BF] shadow-2xs pointer-events-none">
+                Verified Look
               </div>
             </div>
           ) : (
-            /* 1B. Realistic Preview Unavailable Notice (Part 5) */
-            <div className="relative w-full h-full flex flex-col items-center justify-between p-6 bg-[#16181F]/90 backdrop-blur-md text-center">
-              {/* Standalone neutral mannequin backdrop */}
-              <div className="absolute inset-0 opacity-20 pointer-events-none">
+            /* B. Realistic Preview Unavailable State */
+            <div className="relative w-full h-full flex flex-col items-center justify-between p-5 text-center">
+              <div className="absolute inset-0 opacity-15 pointer-events-none flex items-center justify-center">
                 <img
                   src={neutralMannequinImg}
-                  alt="Neutral Store Mannequin"
-                  className="w-full h-full object-cover"
+                  alt="Neutral Mannequin"
+                  className="w-full h-full object-contain"
                 />
               </div>
 
-              <div className="relative z-10 w-full pt-4">
-                <div className="w-12 h-12 rounded-full bg-[#A78BFA]/10 border border-[#A78BFA]/30 flex items-center justify-center mx-auto mb-2.5 text-[#A78BFA]">
-                  <AlertCircle className="w-6 h-6" />
+              <div className="relative z-10 w-full pt-3">
+                <div className="w-9 h-9 rounded-full bg-[#9271BF]/10 border border-[#9271BF]/20 flex items-center justify-center mx-auto mb-2 text-[#9271BF]">
+                  <AlertCircle className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-serif font-bold text-white">
+                <h4 className="text-xs font-serif font-bold text-[#292331]">
                   Realistic preview unavailable for this combination
-                </h3>
-                <p className="text-[11px] text-[#A8ADB8] max-w-[320px] mx-auto mt-1 leading-relaxed">
-                  To ensure genuine photographic realism, only verified fashion combinations are shown on the store mannequin.
+                </h4>
+                <p className="text-[10px] text-[#6D6574] max-w-[260px] mx-auto mt-0.5 leading-snug">
+                  Only verified combinations are presented on the showroom mannequin.
                 </p>
               </div>
 
               {/* Suggestion Card */}
-              <div className="relative z-10 w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-left">
-                <span className="text-[9.5px] uppercase font-bold text-[#A78BFA] tracking-wider block mb-1">
-                  Recommended Compatible Alternative
+              <div className="relative z-10 w-full max-w-[280px] p-3 rounded-xl bg-white/60 border border-white/80 text-left shadow-2xs">
+                <span className="text-[9px] uppercase font-bold text-[#9271BF] block">
+                  Recommended Alternative
                 </span>
-                <p className="text-xs font-semibold text-white">
+                <p className="text-[11px] font-semibold text-[#292331] truncate">
                   {suggestedPreset.name}
                 </p>
-                <p className="text-[10px] text-[#A8ADB8] mt-0.5 line-clamp-2">
-                  {suggestedPreset.subtitle}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-1.5">
                   <button
                     onClick={() => onApplyPreset(suggestedPreset.id)}
-                    className="flex-1 py-1.5 px-3 rounded-full text-xs font-bold bg-[#A78BFA] text-[#111318] hover:bg-[#BFA5FB] transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs"
+                    className="flex-1 py-1 px-2.5 rounded-full text-[10.5px] font-bold bg-[#9271BF] text-white hover:bg-[#815EAE] transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    <span>Equip This Look</span>
+                    <span>Equip Look</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                   <button
-                    onClick={() => setActiveTab('board')}
-                    className="py-1.5 px-3 rounded-full text-xs font-semibold text-[#A8ADB8] hover:text-white bg-white/10 hover:bg-white/15 transition-all cursor-pointer"
+                    onClick={() => setViewMode('board')}
+                    className="py-1 px-2.5 rounded-full text-[10.5px] font-medium text-[#6D6574] hover:text-[#292331] bg-white/70 hover:bg-white transition-all cursor-pointer"
                   >
-                    View Outfit Board
+                    Outfit Board
                   </button>
                 </div>
               </div>
 
-              <div className="relative z-10 pb-2">
-                <span className="text-[10px] text-[#A8ADB8]/70">
-                  Select a verified outfit combination or switch to the Outfit Board view.
-                </span>
+              <div className="relative z-10 text-[9.5px] text-[#6D6574]/80 pb-1">
+                Select a verified outfit or switch to the Outfit Board view.
               </div>
             </div>
-          )}
-
-        </div>
-      ) : (
-        /* VIEW 2: Premium Curated Outfit Board Fallback */
-        <div className="w-full max-w-[440px] aspect-[440/620] rounded-[36px] p-5 flex flex-col justify-between mannequin-chamber border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.7)]">
-          <div className="text-center mb-1">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#A78BFA]">
-              Curated Outfit Ensembles
-            </span>
-            <h4 className="text-sm font-serif font-bold text-white">
-              Selected Pieces Breakdown
-            </h4>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 flex-1 items-center">
-            {/* Top or Dress Box */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 flex flex-col items-center text-center">
-              <span className="text-[9.5px] uppercase font-bold text-[#A78BFA] mb-1">
-                {dress ? 'Equipped Dress' : 'Equipped Top'}
-              </span>
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 mb-1.5">
-                {(dress || top) ? (
-                  <img
-                    src={`/catalog/${(dress || top).image}`}
-                    alt={(dress || top).name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#A8ADB8]">
-                    <Shirt className="w-6 h-6 opacity-40" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-semibold text-white line-clamp-1">
-                {(dress || top)?.name || 'No Top Selected'}
-              </p>
-              <p className="text-[9px] text-[#A8ADB8]">
-                {(dress || top)?.price || 'Select a top'}
-              </p>
-            </div>
-
-            {/* Bottom Box (Hidden if dress) */}
-            <div className={`bg-white/5 border border-white/10 rounded-2xl p-2.5 flex flex-col items-center text-center ${dress ? 'opacity-40' : ''}`}>
-              <span className="text-[9.5px] uppercase font-bold text-[#A78BFA] mb-1">
-                {dress ? 'Covered by Dress' : 'Equipped Bottom'}
-              </span>
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 mb-1.5">
-                {!dress && bottom ? (
-                  <img
-                    src={`/catalog/${bottom.image}`}
-                    alt={bottom.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#A8ADB8]">
-                    <Layers className="w-6 h-6 opacity-40" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-semibold text-white line-clamp-1">
-                {dress ? 'Dress active' : (bottom?.name || 'No Bottom Selected')}
-              </p>
-              <p className="text-[9px] text-[#A8ADB8]">
-                {dress ? '—' : (bottom?.price || 'Select a bottom')}
-              </p>
-            </div>
-
-            {/* Shoes Box */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 flex flex-col items-center text-center">
-              <span className="text-[9.5px] uppercase font-bold text-[#A78BFA] mb-1">
-                Equipped Shoes
-              </span>
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 mb-1.5">
-                {shoes ? (
-                  <img
-                    src={`/catalog/${shoes.image}`}
-                    alt={shoes.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#A8ADB8]">
-                    <Footprints className="w-6 h-6 opacity-40" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-semibold text-white line-clamp-1">
-                {shoes?.name || 'No Shoes Selected'}
-              </p>
-              <p className="text-[9px] text-[#A8ADB8]">
-                {shoes?.price || 'Select shoes'}
-              </p>
-            </div>
-
-            {/* Handbag Box */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-2.5 flex flex-col items-center text-center">
-              <span className="text-[9.5px] uppercase font-bold text-[#A78BFA] mb-1">
-                Equipped Handbag
-              </span>
-              <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 mb-1.5">
-                {bag ? (
-                  <img
-                    src={`/catalog/${bag.image}`}
-                    alt={bag.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#A8ADB8]">
-                    <ShoppingBag className="w-6 h-6 opacity-40" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-semibold text-white line-clamp-1">
-                {bag?.name || 'No Bag Selected'}
-              </p>
-              <p className="text-[9px] text-[#A8ADB8]">
-                {bag?.price || 'Select a bag'}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-2 text-center">
-            <button
-              onClick={() => setActiveTab('mannequin')}
-              className="text-[10.5px] text-[#A78BFA] hover:underline flex items-center justify-center gap-1 mx-auto cursor-pointer"
-            >
-              <span>Back to Mannequin Display</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Equipped Garment Badges HUD */}
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 max-w-[440px]">
-        {dress ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10.5px] text-white">
-            <span className="w-2 h-2 rounded-full bg-[#A78BFA]" />
-            <span className="font-semibold">{dress.name}</span>
-            <button
-              onClick={() => onRemoveItem('dress')}
-              className="text-[#A8ADB8] hover:text-white cursor-pointer ml-1"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
+          )
         ) : (
-          <>
-            {top && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10.5px] text-white">
-                <span className="w-2 h-2 rounded-full bg-[#A78BFA]" />
-                <span className="font-semibold">{top.name}</span>
-                <button
-                  onClick={() => onRemoveItem('top')}
-                  className="text-[#A8ADB8] hover:text-white cursor-pointer ml-1"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+          /* C. Curated Outfit Board View */
+          <div className="w-full h-full p-3.5 flex flex-col justify-between">
+            <div className="text-center mb-1">
+              <span className="text-[9.5px] uppercase font-bold tracking-widest text-[#9271BF]">
+                Curated Outfit Board
+              </span>
+              <p className="text-xs font-serif font-bold text-[#292331]">
+                Active Selected Pieces
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 flex-1 items-center max-w-[340px] mx-auto w-full">
+              {/* Top / Dress */}
+              <div className="bg-white/55 border border-white/70 rounded-xl p-2 flex flex-col items-center text-center shadow-2xs">
+                <span className="text-[9px] uppercase font-bold text-[#9271BF] mb-0.5">
+                  {dress ? 'Dress' : 'Top'}
+                </span>
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/80 border border-white/70 mb-1">
+                  {(dress || top) ? (
+                    <img
+                      src={`/catalog/${(dress || top).image}`}
+                      alt={(dress || top).name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#6D6574]">
+                      <Shirt className="w-5 h-5 opacity-40" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9.5px] font-semibold text-[#292331] line-clamp-1">
+                  {(dress || top)?.name || 'None'}
+                </p>
+                <p className="text-[9px] text-[#6D6574]">
+                  {(dress || top)?.price || '—'}
+                </p>
               </div>
-            )}
-            {bottom && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10.5px] text-white">
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
-                <span className="font-semibold">{bottom.name}</span>
-                <button
-                  onClick={() => onRemoveItem('bottom')}
-                  className="text-[#A8ADB8] hover:text-white cursor-pointer ml-1"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+
+              {/* Bottom (Hidden if dress) */}
+              <div className={`bg-white/55 border border-white/70 rounded-xl p-2 flex flex-col items-center text-center shadow-2xs ${dress ? 'opacity-40' : ''}`}>
+                <span className="text-[9px] uppercase font-bold text-[#9271BF] mb-0.5">
+                  {dress ? 'Covered' : 'Bottom'}
+                </span>
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/80 border border-white/70 mb-1">
+                  {!dress && bottom ? (
+                    <img
+                      src={`/catalog/${bottom.image}`}
+                      alt={bottom.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#6D6574]">
+                      <Layers className="w-5 h-5 opacity-40" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9.5px] font-semibold text-[#292331] line-clamp-1">
+                  {dress ? 'Dress active' : (bottom?.name || 'None')}
+                </p>
+                <p className="text-[9px] text-[#6D6574]">
+                  {dress ? '—' : (bottom?.price || '—')}
+                </p>
               </div>
-            )}
-          </>
-        )}
-        {shoes && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10.5px] text-white">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="font-semibold">{shoes.name}</span>
-            <button
-              onClick={() => onRemoveItem('shoes')}
-              className="text-[#A8ADB8] hover:text-white cursor-pointer ml-1"
-            >
-              <X className="w-3 h-3" />
-            </button>
+            </div>
+
+            <div className="text-center pt-1">
+              <button
+                onClick={() => setViewMode('mannequin')}
+                className="text-[10px] text-[#9271BF] font-semibold hover:underline"
+              >
+                Back to Mannequin Display →
+              </button>
+            </div>
           </div>
         )}
-        {bag && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-[10.5px] text-white">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="font-semibold">{bag.name}</span>
-            <button
-              onClick={() => onRemoveItem('bag')}
-              className="text-[#A8ADB8] hover:text-white cursor-pointer ml-1"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
+
       </div>
+
+      {/* COMPACT GLASS TOOLBAR (Directly Below Mannequin - Part 3) */}
+      <div className="w-full mt-2 flex items-center justify-between px-3 py-1.5 rounded-full bg-white/45 backdrop-blur-md border border-white/70 shadow-xs flex-shrink-0">
+        
+        {/* Navigation arrows & Outfit label */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <button 
+            onClick={onPrevLook}
+            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white flex items-center justify-center text-[#292331] shadow-2xs transition-all cursor-pointer flex-shrink-0"
+            title="Previous Curated Look"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+
+          <span className="text-[11px] font-semibold text-[#292331] truncate px-1">
+            {currentLook.name}
+          </span>
+
+          <button 
+            onClick={onNextLook}
+            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white flex items-center justify-center text-[#292331] shadow-2xs transition-all cursor-pointer flex-shrink-0"
+            title="Next Curated Look"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Action buttons: Save & Reset */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+          <button
+            onClick={onSaveOutfit}
+            className="px-2.5 py-1 rounded-full text-[10.5px] font-semibold bg-[#9271BF] text-white hover:bg-[#815EAE] shadow-xs flex items-center gap-1 transition-all cursor-pointer"
+            title="Save current look to wardrobe"
+          >
+            <Heart className="w-3 h-3 fill-white" />
+            <span>Save</span>
+          </button>
+
+          <button
+            onClick={onResetOutfit}
+            className="w-6 h-6 rounded-full bg-white/60 hover:bg-white text-[#6D6574] hover:text-[#292331] flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+            title="Reset to default outfit"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        </div>
+
+      </div>
+
     </div>
   );
 }

@@ -2,21 +2,19 @@
 
 @layer base {
   :root {
-    --bg-main: #111318;
-    --bg-secondary: #191C22;
-    --glass-surface: rgba(255, 255, 255, 0.06);
-    --glass-border: rgba(255, 255, 255, 0.16);
-    --text-primary: #F5F5F7;
-    --text-secondary: #A8ADB8;
-    --accent: #A78BFA;
-    --accent-glow: rgba(167, 139, 250, 0.35);
+    --bg-main: #D8D0DC;
+    --bg-secondary: #E5DEE8;
+    --glass-panel: rgba(255, 255, 255, 0.32);
+    --glass-border: rgba(255, 255, 255, 0.60);
+    --text-primary: #292331;
+    --text-secondary: #6D6574;
+    --accent: #9271BF;
   }
 
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    overflow-x: hidden;
   }
 
   h1, h2, h3, .font-serif, .font-display {
@@ -24,72 +22,73 @@
   }
 }
 
-/* Dark Glassmorphism Classes for Charcoal Theme */
-.dark-glass-panel {
-  background: rgba(25, 28, 34, 0.72);
+/* Smoky Mauve Glassmorphism Theme Classes */
+.mauve-glass-panel {
+  background: rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  box-shadow: 0 10px 30px rgba(41, 35, 49, 0.06);
 }
 
-.dark-glass-surface {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.dark-glass-card {
-  background: rgba(255, 255, 255, 0.05);
+.mauve-glass-surface {
+  background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.50);
 }
 
-.dark-glass-card:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(167, 139, 250, 0.4);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(167, 139, 250, 0.2);
+.mauve-glass-card {
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 16px rgba(41, 35, 49, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dark-glass-button-primary {
-  background: #A78BFA;
-  color: #111318;
-  font-weight: 700;
-  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.35);
+.mauve-glass-card:hover {
+  transform: translateY(-1.5px);
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(146, 113, 191, 0.55);
+  box-shadow: 0 8px 22px rgba(146, 113, 191, 0.12);
+}
+
+.mauve-btn-primary {
+  background: #9271BF;
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(146, 113, 191, 0.28);
   transition: all 0.2s ease;
 }
 
-.dark-glass-button-primary:hover {
-  background: #BFA5FB;
+.mauve-btn-primary:hover {
+  background: #815EAE;
   transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(167, 139, 250, 0.48);
+  box-shadow: 0 6px 18px rgba(146, 113, 191, 0.38);
 }
 
-/* Mannequin Chamber Glass Cylinder Styling */
+/* Mannequin Chamber Glass Container */
 .mannequin-chamber {
-  background: radial-gradient(circle at 50% 35%, rgba(35, 40, 52, 0.95), rgba(20, 23, 29, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 14px 40px rgba(41, 35, 49, 0.08), inset 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
-/* Dark theme custom scrollbars */
+/* Custom scrollbars for internal scroll areas */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(109, 101, 116, 0.08);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(146, 113, 191, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(167, 139, 250, 0.5);
+  background: rgba(146, 113, 191, 0.65);
 }
