@@ -42,6 +42,7 @@ export default function StudioPage() {
     tops: []
   });
   const [activeLookIndex, setActiveLookIndex] = useState(0);
+  const [stylingMode, setStylingMode] = useState('auto'); // 'auto' | 'mix_match'
   const [lastSelectedCategory, setLastSelectedCategory] = useState('tops'); // 'tops' | 'bottoms' | 'dresses'
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -135,47 +136,69 @@ export default function StudioPage() {
     if (cat === 'tops') {
       setLastSelectedCategory('tops');
 
-      // 1. Find all verified outfits containing this top's product ID
-      const verifiedOutfits = PREDEFINED_OUTFITS.filter(p => p.topId === item.id);
-
-      // 2. Check if the currently equipped bottom already forms a verified outfit with this top
-      let targetPreset = verifiedOutfits.find(p => p.bottomId === selectedOutfit.bottom?.id);
-
-      // 3. If not, automatically select the matching verified bottom:
-      if (!targetPreset && verifiedOutfits.length > 0) {
-        // Special case for Black Fitted Top (ID 2):
-        // Prioritize Look 11 (Cream Mini Skirt ID 22 + Boots)
-        if (item.id === 2) {
-          targetPreset = verifiedOutfits.find(p => p.id === 11) || verifiedOutfits[0];
-        } else if (activeOccasion !== 'All') {
-          targetPreset = verifiedOutfits.find(p => p.occasion === activeOccasion) || verifiedOutfits[0];
-        } else {
-          targetPreset = verifiedOutfits[0];
+      if (stylingMode === 'mix_match') {
+        // Manual Mix & Match mode: Preserve user's chosen bottom
+        const currentBottom = selectedOutfit.bottom;
+        const matched = PREDEFINED_OUTFITS.find(p => p.topId === item.id && p.bottomId === currentBottom?.id);
+        let nextShoes = selectedOutfit.shoes;
+        let nextBag = selectedOutfit.bag;
+        if (matched) {
+          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === matched.id);
+          if (idx !== -1) setActiveLookIndex(idx);
+          if (matched.shoesId) nextShoes = catalogProducts.find(p => p.id === matched.shoesId) || nextShoes;
+          if (matched.bagId) nextBag = catalogProducts.find(p => p.id === matched.bagId) || nextBag;
         }
-      }
-
-      if (targetPreset) {
-        const companionBottom = catalogProducts.find(p => p.id === targetPreset.bottomId);
-        const companionShoes = targetPreset.shoesId ? catalogProducts.find(p => p.id === targetPreset.shoesId) : selectedOutfit.shoes;
-        const companionBag = targetPreset.bagId ? catalogProducts.find(p => p.id === targetPreset.bagId) : selectedOutfit.bag;
-
-        setSelectedOutfit({
-          top: item,
-          bottom: companionBottom || null,
-          dress: null,
-          shoes: companionShoes || null,
-          bag: companionBag || null
-        });
-
-        const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === targetPreset.id);
-        if (idx !== -1) setActiveLookIndex(idx);
-      } else {
-        // No verified outfit exists for this top: keep selected bottom, display honest unsupported state
         setSelectedOutfit(prev => ({
           ...prev,
           top: item,
-          dress: null
+          dress: null,
+          shoes: nextShoes,
+          bag: nextBag
         }));
+      } else {
+        // Automatic styling mode: continue selecting a verified compatible outfit as currently implemented
+        // 1. Find all verified outfits containing this top's product ID
+        const verifiedOutfits = PREDEFINED_OUTFITS.filter(p => p.topId === item.id);
+
+        // 2. Check if the currently equipped bottom already forms a verified outfit with this top
+        let targetPreset = verifiedOutfits.find(p => p.bottomId === selectedOutfit.bottom?.id);
+
+        // 3. If not, automatically select the matching verified bottom:
+        if (!targetPreset && verifiedOutfits.length > 0) {
+          // Special case for Black Fitted Top (ID 2):
+          // Prioritize Look 11 (Cream Mini Skirt ID 22 + Boots)
+          if (item.id === 2) {
+            targetPreset = verifiedOutfits.find(p => p.id === 11) || verifiedOutfits[0];
+          } else if (activeOccasion !== 'All') {
+            targetPreset = verifiedOutfits.find(p => p.occasion === activeOccasion) || verifiedOutfits[0];
+          } else {
+            targetPreset = verifiedOutfits[0];
+          }
+        }
+
+        if (targetPreset) {
+          const companionBottom = catalogProducts.find(p => p.id === targetPreset.bottomId);
+          const companionShoes = targetPreset.shoesId ? catalogProducts.find(p => p.id === targetPreset.shoesId) : selectedOutfit.shoes;
+          const companionBag = targetPreset.bagId ? catalogProducts.find(p => p.id === targetPreset.bagId) : selectedOutfit.bag;
+
+          setSelectedOutfit({
+            top: item,
+            bottom: companionBottom || null,
+            dress: null,
+            shoes: companionShoes || null,
+            bag: companionBag || null
+          });
+
+          const idx = PREDEFINED_OUTFITS.findIndex(p => p.id === targetPreset.id);
+          if (idx !== -1) setActiveLookIndex(idx);
+        } else {
+          // No verified outfit exists for this top: keep selected bottom, display outfit board
+          setSelectedOutfit(prev => ({
+            ...prev,
+            top: item,
+            dress: null
+          }));
+        }
       }
 
       triggerCVSimilarity(item.id);
@@ -277,6 +300,7 @@ export default function StudioPage() {
 
   // Reset entire outfit to default Look 1
   const handleResetOutfit = () => {
+    setStylingMode('auto');
     applyPreset(1);
     showToast(`Outfit reset to default ensemble.`);
   };
@@ -588,6 +612,8 @@ export default function StudioPage() {
             onResetOutfit={handleResetOutfit}
             activeLookIndex={activeLookIndex}
             onApplyPreset={applyPreset}
+            stylingMode={stylingMode}
+            onModeChange={setStylingMode}
           />
         </section>
 
