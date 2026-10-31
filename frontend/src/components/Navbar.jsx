@@ -1,114 +1,71 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Menu, X, Shirt, Eye } from 'lucide-react';
+import React from 'react';
+import { Heart, ShoppingBag, User } from 'lucide-react';
 
-export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Explore', path: '/explore' },
-    { name: 'Outfit Match', path: '/outfits' },
-    { name: 'About', path: '/about' },
-  ];
-
-  const isActive = (path) => {
-    if (path === '/' && location.pathname === '/') return true;
-    if (path !== '/' && location.pathname.startsWith(path)) return true;
-    return false;
-  };
-
+export default function Navbar({ onOpenHowItWorks, onOpenAbout, onOpenSaved, savedCount = 0 }) {
   return (
-    <header className="sticky top-0 z-50 fashion-glass border-b border-[#EDE3F4]/80 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
-          {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7950A3] to-[#E8B5C4] flex items-center justify-center text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
-              <Shirt className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-serif tracking-tight text-[#211827]">
-                Vogue<span className="text-[#7950A3] font-normal italic">Vision</span>
-              </span>
-              <span className="text-[10px] uppercase tracking-widest text-[#7950A3]/80 -mt-1 font-medium">
-                CV Fashion Studio
-              </span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  isActive(link.path)
-                    ? 'bg-[#EDE3F4] text-[#7950A3] shadow-xs'
-                    : 'text-[#211827]/80 hover:text-[#7950A3] hover:bg-[#F5EEF5]/70'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Right Action / CTA Button */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/explore"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white bg-gradient-to-r from-[#7950A3] to-[#9165BF] hover:from-[#6A4392] hover:to-[#7950A3] shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
-            >
-              <Sparkles className="w-4 h-4 text-[#EDE3F4]" />
-              <span>Discover Your Style</span>
-            </Link>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="flex md:hidden">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-[#211827] hover:bg-[#EDE3F4]/50 focus:outline-none"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
+    <header className="w-full px-6 py-4 flex items-center justify-between z-30 select-none">
+      {/* Brand Logo & Subtitle */}
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-serif font-bold tracking-tight text-[#241B35]">
+          Vogue<span className="font-serif italic font-normal text-[#8B5AC2]">Vision</span>
+        </h1>
+        <span className="text-[9.5px] uppercase tracking-[0.2em] font-semibold text-[#8B5AC2]/90 mt-0.5">
+          Computer Vision Fashion Studio
+        </span>
       </div>
 
-      {/* Mobile menu dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b border-[#EDE3F4] bg-[#FAF8F7] px-4 pt-3 pb-6 space-y-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-2.5 rounded-xl text-base font-medium ${
-                isActive(link.path)
-                  ? 'bg-[#EDE3F4] text-[#7950A3]'
-                  : 'text-[#211827] hover:bg-[#F5EEF5]'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-          <div className="pt-2">
-            <Link
-              to="/explore"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium text-white bg-[#7950A3] hover:bg-[#6A4392]"
-            >
-              <Sparkles className="w-4 h-4 text-[#EDE3F4]" />
-              <span>Discover Your Style</span>
-            </Link>
-          </div>
+      {/* Center/Right Pill Navigation */}
+      <div className="flex items-center gap-4">
+        <nav className="flex items-center bg-white/40 backdrop-blur-xl border border-white/60 rounded-full p-1 shadow-[0_4px_20px_rgba(139,90,194,0.06)]">
+          <button
+            className="px-5 py-2 rounded-full text-xs font-semibold tracking-wide bg-white text-[#241B35] shadow-[0_2px_8px_rgba(139,90,194,0.12)] transition-all cursor-pointer"
+          >
+            Style Studio
+          </button>
+          <button
+            onClick={onOpenHowItWorks}
+            className="px-4 py-2 rounded-full text-xs font-medium text-[#241B35]/75 hover:text-[#8B5AC2] hover:bg-white/50 transition-all cursor-pointer"
+          >
+            How It Works
+          </button>
+          <button
+            onClick={onOpenAbout}
+            className="px-4 py-2 rounded-full text-xs font-medium text-[#241B35]/75 hover:text-[#8B5AC2] hover:bg-white/50 transition-all cursor-pointer"
+          >
+            About
+          </button>
+        </nav>
+
+        {/* Right utility buttons (Favorites / Bag / User) */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenSaved}
+            className="relative w-9 h-9 rounded-full bg-white/45 backdrop-blur-md border border-white/70 flex items-center justify-center text-[#241B35] hover:text-[#8B5AC2] hover:bg-white transition-all shadow-xs cursor-pointer group"
+            title="Saved Outfits"
+          >
+            <Heart className="w-4 h-4 transition-transform group-hover:scale-110" />
+            {savedCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#8B5AC2] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+                {savedCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            className="w-9 h-9 rounded-full bg-white/45 backdrop-blur-md border border-white/70 flex items-center justify-center text-[#241B35] hover:text-[#8B5AC2] hover:bg-white transition-all shadow-xs cursor-pointer group"
+            title="Wardrobe Bag"
+          >
+            <ShoppingBag className="w-4 h-4 transition-transform group-hover:scale-110" />
+          </button>
+
+          <button
+            className="w-9 h-9 rounded-full bg-white/45 backdrop-blur-md border border-white/70 flex items-center justify-center text-[#241B35] hover:text-[#8B5AC2] hover:bg-white transition-all shadow-xs cursor-pointer group"
+            title="Stylist Profile"
+          >
+            <User className="w-4 h-4 transition-transform group-hover:scale-110" />
+          </button>
         </div>
-      )}
+      </div>
     </header>
   );
 }

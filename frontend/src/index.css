@@ -2,47 +2,101 @@
 
 @layer base {
   :root {
-    --bg-primary: #FAF8F7;
-    --bg-secondary: #F5EEF5;
-    --text-primary: #211827;
-    --accent-purple: #7950A3;
-    --soft-lavender: #EDE3F4;
-    --muted-rose: #E8B5C4;
-    --color-white: #FFFFFF;
+    --primary-purple: #8B5AC2;
+    --secondary-lilac: #C8B4E8;
+    --bg-warm-ivory: #F8F5FA;
+    --accent-pink: #F1C6D8;
+    --text-deep-plum: #241B35;
+    --glass-bg: rgba(255, 255, 255, 0.35);
+    --glass-border: rgba(255, 255, 255, 0.65);
+    --glass-shadow: 0 12px 40px rgba(80, 40, 120, 0.12);
   }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--bg-warm-ivory);
+    color: var(--text-deep-plum);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
   }
 
-  h1, h2, h3, .font-serif {
+  h1, h2, h3, .font-serif, .font-display {
     font-family: 'Playfair Display', Georgia, serif;
   }
 }
 
-/* Custom fashion utility classes */
-.font-display {
-  font-family: 'Playfair Display', Georgia, serif;
+/* Glassmorphism Classes matching Reference Image */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 40px rgba(80, 40, 120, 0.08);
 }
 
-.fashion-glass {
-  background: rgba(255, 255, 255, 0.82);
+.glass-panel-subtle {
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 24px rgba(80, 40, 120, 0.06);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 14px 30px rgba(139, 90, 194, 0.14);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(237, 227, 244, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.fashion-card-shadow {
-  box-shadow: 0 10px 30px -5px rgba(121, 80, 163, 0.08), 0 4px 12px -2px rgba(33, 24, 39, 0.04);
+.glass-button-primary {
+  background: #8B5AC2;
+  color: #FFFFFF;
+  box-shadow: 0 8px 20px rgba(139, 90, 194, 0.35);
+  transition: all 0.2s ease;
 }
 
-.fashion-card-hover {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.glass-button-primary:hover {
+  background: #7848AE;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(139, 90, 194, 0.45);
 }
 
-.fashion-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 36px -8px rgba(121, 80, 163, 0.16), 0 6px 16px -2px rgba(33, 24, 39, 0.06);
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(200, 180, 232, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 90, 194, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 90, 194, 0.6);
+}
+
+/* Glow effects */
+.glow-purple {
+  box-shadow: 0 0 25px rgba(139, 90, 194, 0.3);
+}
+
+.glow-platform {
+  box-shadow: 0 15px 45px rgba(139, 90, 194, 0.25), inset 0 0 25px rgba(200, 180, 232, 0.4);
 }

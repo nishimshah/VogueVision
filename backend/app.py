@@ -204,6 +204,64 @@ def recommend_outfit():
         "curated_outfits": outfits
     }), 200
 
+@app.route("/api/products/<int:product_id>/styling", methods=["GET"])
+def get_product_styling(product_id):
+    """
+    Core CV Styling Studio Endpoint:
+    Given a selected catalog product:
+    1. Loads its precomputed 512-D HSV histogram and dominant colors.
+    2. Runs cv2.compareHist(HISTCMP_CORREL) across catalog items in the same category (excluding self).
+    3. Retrieves color harmony complementary pieces (bottoms, shoes, bags).
+    4. Generates 5 curated complete outfit combinations.
+    """
+    catalog = load_catalog()
+    product = next((p for p in catalog if p["id"] == product_id), None)
+    if not product:
+        return jsonify({"error": f"Product with ID {product_id} not found."}), 404
+
+    category = product.get("category", "tops")
+    primary_color = product.get("primary_color", "pink")
+    hist = product.get("histogram", [])
+
+    # 1. OpenCV Histogram Correlation for visually similar styles (filter same category, exclude self)
+    similar_items = find_similar_products(
+        query_hist=hist,
+        query_primary_color=primary_color,
+        category_filter=category,
+        top_k=5,
+        exclude_id=product_id
+    )
+
+    # 2. Rule-based color harmony complementary pieces
+    complementary_pieces = get_complementary_items(category, primary_color)
+
+    # 3. 5 Curated complete stylized looks
+    item_meta = dict(product)
+    item_meta["imageUrl"] = f"/catalog/{item_meta['image']}"
+    curated_outfits = generate_curated_outfits(item_meta, primary_color)
+
+    # Format clean product object without raw 512-D array to keep response fast
+    clean_product = dict(product)
+    if "histogram" in clean_product:
+        del clean_product["histogram"]
+    clean_product["imageUrl"] = f"/catalog/{clean_product['image']}"
+
+    return jsonify({
+        "success": True,
+        "product": clean_product,
+        "similar_styles": similar_items,
+        "complementary_pieces": complementary_pieces,
+        "curated_outfits": curated_outfits,
+        "cv_metrics": {
+            "algorithm": "cv2.compareHist (HISTCMP_CORREL)",
+            "histogram_bins": "8x8x8 HSV (512 dimensions)",
+            "clustering": "cv2.kmeans (K=4, RGB pixels)",
+            "normalization": "cv2.NORM_MINMAX [0, 1]",
+            "category_filtered": category,
+            "excluded_self_id": product_id
+        }
+    }), 200
+
 # Static file routes for images
 @app.route("/catalog/<path:filename>")
 def serve_catalog_image(filename):

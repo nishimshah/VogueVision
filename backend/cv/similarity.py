@@ -19,7 +19,7 @@ def load_catalog():
     with open(PRODUCTS_JSON, "r") as f:
         return json.load(f)
 
-def find_similar_products(query_hist: list, query_primary_color: str = None, category_filter: str = None, top_k: int = 5):
+def find_similar_products(query_hist: list, query_primary_color: str = None, category_filter: str = None, top_k: int = 5, exclude_id: int = None):
     """
     Ranks catalog products by HSV color histogram correlation against the query image.
 
@@ -33,6 +33,7 @@ def find_similar_products(query_hist: list, query_primary_color: str = None, cat
     - query_primary_color: detected primary color name (e.g. 'pink', 'blue')
     - category_filter: optional category filter ('tops', 'jeans', 'dresses', etc.)
     - top_k: number of results to return (default 5)
+    - exclude_id: optional product ID to exclude from recommendations
     """
     catalog = load_catalog()
     if not catalog:
@@ -42,6 +43,10 @@ def find_similar_products(query_hist: list, query_primary_color: str = None, cat
 
     results = []
     for item in catalog:
+        # Exclude self if requested
+        if exclude_id is not None and item.get("id") == exclude_id:
+            continue
+
         # Category filter check if specified
         if category_filter and category_filter.lower() != "all":
             if item.get("category", "").lower() != category_filter.lower():

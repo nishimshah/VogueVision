@@ -56,4 +56,10 @@ export const getOutfitRecommendations = async (itemId, category, primaryColor) =
   return response.data;
 };
 
+export const getProductStyling = async (productId) => {
+  const response = await api.get(`/products/${productId}/styling`);
+  return response.data;
+};
+
 export default api;
+

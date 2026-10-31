@@ -100,7 +100,7 @@ def generate_curated_outfits(main_item: dict, primary_color: str):
             "imageUrl": f"/catalog/{item['image']}"
         }
 
-    # Curate presets with intelligent fallbacks
+    # Curate 5 distinct styled looks (matching Outfit 1/5 to 5/5)
     outfits = [
         {
             "id": "look-1",
@@ -110,7 +110,7 @@ def generate_curated_outfits(main_item: dict, primary_color: str):
             "main_item": main_item,
             "bottom": get_prod(10), # Light wash straight wide jeans
             "shoes": get_prod(29),   # White tennis sneakers
-            "accessory": get_prod(24), # Blush crossbody
+            "accessory": get_prod(23), # Ivory structured bag
             "palette": ["#E8B5C4", "#8EB3D8", "#FAF8F7", "#D4A5B8"]
         },
         {
@@ -121,19 +121,41 @@ def generate_curated_outfits(main_item: dict, primary_color: str):
             "main_item": main_item,
             "bottom": get_prod(11), # Ecru pleated trousers
             "shoes": get_prod(30),   # Strappy beige block heel sandals
-            "accessory": get_prod(23), # Ivory structured handbag
+            "accessory": get_prod(24), # Blush crossbody
             "palette": ["#E8B5C4", "#F5EFE6", "#D9C7B2", "#7950A3"]
         },
         {
             "id": "look-3",
-            "title": "Modern Parisian",
-            "style": "Romantic Minimalist",
-            "description": "Flared dark denim or fluid trousers paired with artisan woven slides and a woven tambour bag.",
+            "title": "Romantic Sunray",
+            "style": "Graceful Garden & High Tea",
+            "description": "Fluid sunray pleated midi skirt paired with camel woven slides and an artisanal woven round bag.",
             "main_item": main_item,
-            "bottom": get_prod(12), # Dark indigo flare denim
+            "bottom": get_prod(13), # Ivory pleated midi skirt
             "shoes": get_prod(33),   # Camel woven slides
             "accessory": get_prod(25), # Raffia round straw bag
-            "palette": ["#E8B5C4", "#304368", "#C89D66", "#EDE3F4"]
+            "palette": ["#E8B5C4", "#FAF7F2", "#D1CEC7", "#8B5AC2"]
+        },
+        {
+            "id": "look-4",
+            "title": "Monochrome Sophisticate",
+            "style": "Evening Gallery & Dining",
+            "description": "Tailored black cigarette pants contrasted with nude pointed slingback heels and quilted chain bag.",
+            "main_item": main_item,
+            "bottom": get_prod(16), # Charcoal black cigarette pants
+            "shoes": get_prod(31),   # Nude slingback kitten heels
+            "accessory": get_prod(27), # Black quilted chain bag
+            "palette": ["#E8B5C4", "#1E1E22", "#F6F4F2", "#8B5AC2"]
+        },
+        {
+            "id": "look-5",
+            "title": "Retro Flare",
+            "style": "Downtown Metropolitan",
+            "description": "Dark indigo flared denim with white minimalist tennis sneakers and a structured top-handle bag.",
+            "main_item": main_item,
+            "bottom": get_prod(12), # Dark indigo flare denim
+            "shoes": get_prod(29),   # White leather sneakers
+            "accessory": get_prod(24), # Blush crossbody
+            "palette": ["#E8B5C4", "#2B3C58", "#FAF8F7", "#C8B4E8"]
         }
     ]
 
