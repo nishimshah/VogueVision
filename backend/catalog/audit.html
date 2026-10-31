@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VogueVision Catalog Audit</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; margin: 20px; }
+    h1 { color: #333; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .card { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .img-box { width: 100%; height: 260px; overflow: hidden; border-radius: 8px; background: #fafafa; }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; }
+    .title { font-weight: bold; margin-top: 8px; font-size: 14px; }
+    .cat { font-size: 12px; color: #666; text-transform: uppercase; }
+    .colors { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+    .swatch { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ccc; }
+    .meta { font-size: 11px; color: #444; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>VogueVision Product Catalog Visual Audit (34 Items)</h1>
+  <div class="grid" id="grid"></div>
+  <script>
+    fetch('/api/products')
+      .then(r => r.json())
+      .then(data => {
+        const grid = document.getElementById('grid');
+        data.products.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          const swatches = (p.dominant_colors || []).map(c => 
+            `<div class="swatch" style="background:${c.hex}" title="${c.hex} (${c.percentage}%)"></div>`
+          ).join('');
+          card.innerHTML = `
+            <div class="img-box">
+              <img src="${p.imageUrl}" alt="${p.name}">
+            </div>
+            <div class="title">#${p.id}: ${p.name}</div>
+            <div class="cat">${p.category} | Assigned: <strong>${p.primary_color}</strong></div>
+            <div class="colors">${swatches}</div>
+            <div class="meta">${p.description || ''}</div>
+          `;
+          grid.appendChild(card);
+        });
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Python & Virtual Environments
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Node & Frontend dependencies and build artifacts
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+dist-ssr/
+*.local
+
+# Temporary files from image audit and uploads
+backend/catalog/cand_*
+backend/catalog/chk_*
+backend/catalog/test_*
+backend/catalog/sec*
+backend/catalog/top*
+backend/catalog/cands2/
+backend/catalog/crops/
+backend/catalog/cand_gallery.html
+backend/catalog/cands2_gallery.html
+backend/catalog/search_results.json
+backend/catalog/*.jpg
+backend/uploads/upload_*
+
+# IDE & OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.vscode/
+.idea/
