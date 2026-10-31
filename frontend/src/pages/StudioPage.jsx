@@ -7,14 +7,12 @@ import Navbar from '../components/Navbar';
 import OutfitPreview from '../components/OutfitPreview';
 import { PREDEFINED_OUTFITS } from '../data/outfits';
 import HowItWorksModal from '../components/HowItWorksModal';
-import AboutModal from '../components/AboutModal';
 import SavedOutfitsModal from '../components/SavedOutfitsModal';
 import { getProducts, getProductStyling } from '../services/api';
 
 export default function StudioPage() {
   // Modal states
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
   const [savedModalOpen, setSavedModalOpen] = useState(false);
 
   // Category & Filter State (Tops, Bottoms, Skirts, Dresses)
@@ -451,7 +449,6 @@ export default function StudioPage() {
       {/* Compact Transparent Glass Header */}
       <Navbar 
         onOpenHowItWorks={() => setHowItWorksOpen(true)}
-        onOpenAbout={() => setAboutOpen(true)}
         onOpenSaved={() => setSavedModalOpen(true)}
         savedCount={savedOutfits.length}
       />
@@ -808,11 +805,6 @@ export default function StudioPage() {
       <HowItWorksModal 
         isOpen={howItWorksOpen}
         onClose={() => setHowItWorksOpen(false)}
-      />
-
-      <AboutModal
-        isOpen={aboutOpen}
-        onClose={() => setAboutOpen(false)}
       />
 
       <SavedOutfitsModal

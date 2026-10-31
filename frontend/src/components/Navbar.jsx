@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, ShoppingBag, User, Sparkles } from 'lucide-react';
 
-export default function Navbar({ onOpenHowItWorks, onOpenAbout, onOpenSaved, savedCount = 0 }) {
+export default function Navbar({ onOpenHowItWorks, onOpenSaved, savedCount = 0 }) {
   return (
     <header className="w-full px-6 py-2.5 flex items-center justify-between z-30 select-none bg-white/[0.035] backdrop-blur-2xl border-b border-white/[0.10] shadow-[0_4px_30px_rgba(0,0,0,0.4)] flex-shrink-0">
       {/* Brand Logo & Subtitle */}
@@ -30,12 +30,6 @@ export default function Navbar({ onOpenHowItWorks, onOpenAbout, onOpenSaved, sav
             className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#AAA5B5] hover:text-[#F5F1F8] hover:bg-white/[0.08] transition-all cursor-pointer"
           >
             How It Works
-          </button>
-          <button
-            onClick={onOpenAbout}
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#AAA5B5] hover:text-[#F5F1F8] hover:bg-white/[0.08] transition-all cursor-pointer"
-          >
-            About
           </button>
         </nav>
 
